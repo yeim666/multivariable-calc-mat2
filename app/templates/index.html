@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calculadora Multivariable</title>
+    <link href="{{ url_for('static', filename ='css/style.css')}}" rel="stylesheet">
+   </head>
+  <body>
+    <main class="calculator">
+      
+      <header>
+      <h1>Calculadora Multivariable</h1>
+      <p>Limites y derivadas parciales</p>
+      </header>
+
+      <section class="input-section">
+        <label for="function">
+          Funcion
+        <label for="function"></label>
+
+        <input type="text" id="function" placeholder="Ej: 2x^2 - xy + 4y^3">
+      </section>
+      <section class="operation-section">
+        <div class="field">
+          <label for="operation">Operacion </label>
+          <select id="operation">
+            <option value=derivative"">Derivada parcial</option>
+            <option value="limit">Limite</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="variable">Variable</label>
+          <select id="variable">
+            <option value="x">x</option>
+            <option value="y">y</option>
+            <option value="z">z</option>
+          </select>
+      </div>
+      </section>
+      
+      <button id="calculate">Calcular</button>
+      <section class="result-section">
+        <h2>Resultado</h2>
+        <div id="result">
+          Resultado jeje
+        </div>
+      </section>
+    </main>
+    <script src="{{ url_for('static', filename='js/main.js')}}">
+    </script>
+  </body>
+</html>
