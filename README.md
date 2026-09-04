@@ -297,7 +297,7 @@ Para trabajar en el proyecto sin destruir accidentalmente la rama principal, sig
 ## 1. Clonar el repositorio
 
 ```bash
-git clone URL_DEL_REPOSITORIO
+git clone https://github.com/yeim666/multivariable-calc-mat2/
 ```
 
 Después:
