@@ -45,7 +45,7 @@ python3 --version
 Primero clona el repositorio:
 
 ```bash
-git clone URL_DEL_REPOSITORIO
+git clone https://github.com/yeim666/multivariable-calc-mat2/
 ```
 
 Entra en la carpeta:
