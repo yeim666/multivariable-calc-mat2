@@ -1,53 +1,153 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
+
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Calculadora Multivariable</title>
-    <link href="{{ url_for('static', filename ='css/style.css')}}" rel="stylesheet">
-   </head>
-  <body>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
     <main class="calculator">
-      
-      <header>
-      <h1>Calculadora Multivariable</h1>
-      <p>Limites y derivadas parciales</p>
-      </header>
 
-      <section class="input-section">
-        <label for="function">
-          Funcion
-        <label for="function"></label>
+        <header class="header">
+            <h1>Calculadora Multivariable</h1>
+            <p>Límites y derivadas parciales</p>
+        </header>
 
-        <input type="text" id="function" placeholder="Ej: 2x^2 - xy + 4y^3">
-      </section>
-      <section class="operation-section">
-        <div class="field">
-          <label for="operation">Operacion </label>
-          <select id="operation">
-            <option value=derivative"">Derivada parcial</option>
-            <option value="limit">Limite</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="variable">Variable</label>
-          <select id="variable">
-            <option value="x">x</option>
-            <option value="y">y</option>
-            <option value="z">z</option>
-          </select>
-      </div>
-      </section>
-      
-      <button id="calculate">Calcular</button>
-      <section class="result-section">
-        <h2>Resultado</h2>
-        <div id="result">
-          Resultado jeje
-        </div>
-      </section>
+
+        <section class="operation-section">
+
+            <label for="operation">
+                Operación
+            </label>
+
+            <select id="operation">
+                <option value="limit">
+                    Límite multivariable
+                </option>
+
+                <option value="derivative">
+                    Derivada parcial
+                </option>
+            </select>
+
+        </section>
+
+
+        <!-- ==================== -->
+        <!-- LÍMITES               -->
+        <!-- ==================== -->
+
+        <section id="limit-panel">
+
+            <div class="section-title">
+                <h2>Función</h2>
+                <span>f(x, y)</span>
+            </div>
+
+            <input
+                type="text"
+                id="function"
+                class="function-input"
+                placeholder="x^2 + y^2"
+                autocomplete="off"
+                spellcheck="false"
+            >
+
+
+            <div class="section-title">
+                <h2>Punto de aproximación</h2>
+                <span>(x, y) → (a, b)</span>
+            </div>
+
+
+            <div class="point-inputs">
+
+                <div class="input-group">
+
+                    <label for="point-x">
+                        x →
+                    </label>
+
+                    <input
+                        type="number"
+                        id="point-x"
+                        placeholder="0"
+                        step="any"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="point-y">
+                        y →
+                    </label>
+
+                    <input
+                        type="number"
+                        id="point-y"
+                        placeholder="0"
+                        step="any"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button id="calculate" class="calculate-button">
+                Calcular
+            </button>
+
+
+            <section class="result-section">
+
+                <div class="section-title">
+                    <h2>Resultado</h2>
+                </div>
+
+                <div id="result" class="result">
+                    <span class="result-placeholder">
+                        El resultado aparecerá aquí
+                    </span>
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- ==================== -->
+        <!-- DERIVADAS             -->
+        <!-- ==================== -->
+
+        <section id="derivative-panel" hidden>
+
+            <div class="coming-soon">
+
+                <h2>Derivadas parciales</h2>
+
+                <p>
+                    Esta sección estará disponible próximamente.
+                </p>
+
+            </div>
+
+        </section>
+
     </main>
-    <script src="{{ url_for('static', filename='js/main.js')}}">
-    </script>
-  </body>
+
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+
 </html>
