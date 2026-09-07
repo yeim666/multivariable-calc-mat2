@@ -1,23 +1,37 @@
 import sympy as sp
 
+from sympy.parsing.sympy_parser import (
+    parse_expr,
+    standard_transformations,
+    implicit_multiplication_application,
+    convert_xor
+)
+
+#definicion de transformaciones con sympy
+transformations = standard_transformations + (
+    implicit_multiplication_application,
+    convert_xor,
+)
 
 # parser sencillo, un parser basicamente convierte el input del usuario
 # en una expresion de sympy
 def parse_expression(expression):
 
-    # simbolos permitidos
     x, y, z = sp.symbols("x y z")
 
-    # diccionario asignando el valor correspondiente a cada letra
     variables = {
         "x": x,
         "y": y,
         "z": z
     }
-
-    # sympify convierte el string del input en una expresion de sympy
-    return sp.sympify(expression, locals=variables)
-
+    # parse_expr interpreta la expresión escrita
+    # por el usuario.
+  
+    return parse_expr(
+        expression,
+        local_dict=variables,
+        transformations=transformations
+    )
 
 # obtiene las variables de la expresion
 def get_variables(expression):
