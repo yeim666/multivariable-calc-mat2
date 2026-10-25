@@ -2,10 +2,8 @@
 // elementos del html
 // ====================================================
 
-const operation = document.getElementById("operation");
-
-const limitPanel = document.getElementById("limit-panel");
-const derivativePanel = document.getElementById("derivative-panel");
+const operationSelect = document.getElementById("operation");
+const operationFields = document.getElementById("operation-fields");
 
 const functionInput = document.getElementById("function");
 
@@ -13,14 +11,11 @@ const variablesFeedback = document.getElementById("variables-feedback");
 const variablesFeedbackLabel = document.getElementById("variables-feedback-label");
 const variablesMath = document.getElementById("variables-math");
 
-const limitPointInputs = document.getElementById("limit-point-inputs");
-const derivativePointInputs = document.getElementById("derivative-point-inputs");
-const derivativeVariableSelect = document.getElementById("derivative-variable");
-
 const calculateButton = document.getElementById("calculate");
 
 const resultField = document.getElementById("result-field");
 const resultPlaceholder = document.getElementById("result-placeholder");
+const resultNote = document.getElementById("result-note");
 
 // variables detectadas (nombres planos, usados como claves) y su version
 // latex en paralelo (solo para mostrar), por nombre
@@ -29,21 +24,33 @@ let currentVariablesLatex = {};
 
 
 // ====================================================
-// cambio de operacion (limite / derivada)
+// selector de operaciones (se llena desde operations.js)
 // ====================================================
 
-operation.addEventListener("change", () => {
+function buildOperationSelect() {
 
-    if (operation.value === "limit") {
-        limitPanel.hidden = false;
-        derivativePanel.hidden = true;
-    } else {
-        limitPanel.hidden = true;
-        derivativePanel.hidden = false;
+    // agrupamos por unidad para que la lista siga ordenada al crecer
+    const groups = {};
+
+    for (const [name, op] of Object.entries(OPERATIONS)) {
+
+        if (!groups[op.unit]) {
+            const group = document.createElement("optgroup");
+            group.label = op.unit;
+            groups[op.unit] = group;
+            operationSelect.appendChild(group);
+        }
+
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = op.label;
+        groups[op.unit].appendChild(option);
     }
+}
 
-    renderDynamicInputs(currentVariables);
-
+operationSelect.addEventListener("change", () => {
+    clearResult();
+    renderFields();
 });
 
 
@@ -67,12 +74,11 @@ async function detectVariables() {
         currentVariables = [];
         currentVariablesLatex = {};
         setFeedback("", false);
-        renderDynamicInputs([]);
+        renderFields();
         return;
     }
 
     try {
-        console.log("LaTeX enviado:", JSON.stringify(latex));
         const response = await fetch("/api/variables", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -99,14 +105,14 @@ async function detectVariables() {
                 setFeedback("La expresión no tiene variables (es una constante).", false);
             }
 
-            renderDynamicInputs(currentVariables);
+            renderFields();
 
         } else {
 
             currentVariables = [];
             currentVariablesLatex = {};
             setFeedback(data.error, true);
-            renderDynamicInputs([]);
+            renderFields();
 
         }
 
@@ -141,6 +147,14 @@ function setFeedback(text, isError, mathLatex) {
 }
 
 
+// ====================================================
+// campos de cada operacion
+//
+// cada tipo de campo sabe dibujarse (render) y leerse (read).
+// read devuelve { payload: {...} } con lo que se envia al backend,
+// o { error: "mensaje" } si falta algo
+// ====================================================
+
 // crea una etiqueta <label> que muestra el simbolo de la variable en
 // notacion matematica real (via un math-field de solo lectura), en vez
 // de texto plano — asi se ve bien incluso con letras griegas o subindices
@@ -162,104 +176,273 @@ function createVariableLabel(forId, variableName) {
 }
 
 
-function renderDynamicInputs(variables) {
+// <select> con las variables detectadas. un <select> nativo no puede
+// mostrar math-field dentro de sus <option>, asi que va en texto plano
+function createVariableSelect(id) {
 
-    // -------- panel de limites --------
-    limitPointInputs.innerHTML = "";
+    const select = document.createElement("select");
+    select.id = id;
 
-    if (variables.length === 0) {
-        limitPointInputs.innerHTML =
-            '<p class="empty-hint">Escribe una función para continuar.</p>';
-    } else {
+    currentVariables.forEach((variable) => {
+        const option = document.createElement("option");
+        option.value = variable;
+        option.textContent = variable;
+        select.appendChild(option);
+    });
 
-        variables.forEach((variable) => {
-
-            const group = document.createElement("div");
-            group.className = "input-group";
-
-            const inputId = `point-${variable}`;
-            group.appendChild(createVariableLabel(inputId, variable));
-
-            const input = document.createElement("input");
-            input.type = "number";
-            input.id = inputId;
-            input.className = "point-input";
-            input.dataset.variable = variable;
-            input.placeholder = "0";
-            input.step = "any";
-
-            group.appendChild(input);
-            limitPointInputs.appendChild(group);
-
-        });
-    }
-
-    // -------- panel de derivadas --------
-    derivativePointInputs.innerHTML = "";
-    derivativeVariableSelect.innerHTML = "";
-
-    if (variables.length === 0) {
-
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.textContent = "Escribe una función primero";
-        derivativeVariableSelect.appendChild(placeholder);
-
-        derivativePointInputs.innerHTML =
-            '<p class="empty-hint">Escribe una función para continuar.</p>';
-
-    } else {
-
-        variables.forEach((variable) => {
-
-            // nota: un <select> nativo no puede renderizar math-field dentro
-            // de sus <option>, asi que aqui se queda como texto plano
-            const option = document.createElement("option");
-            option.value = variable;
-            option.textContent = variable;
-            derivativeVariableSelect.appendChild(option);
-
-            const group = document.createElement("div");
-            group.className = "input-group";
-
-            const inputId = `deriv-point-${variable}`;
-            group.appendChild(createVariableLabel(inputId, variable));
-
-            const input = document.createElement("input");
-            input.type = "number";
-            input.id = inputId;
-            input.className = "point-input";
-            input.dataset.variable = variable;
-            input.placeholder = "opcional";
-            input.step = "any";
-
-            group.appendChild(input);
-            derivativePointInputs.appendChild(group);
-
-        });
-    }
-
+    return select;
 }
 
 
-function readPoint(container, requireAll) {
+const FIELD_TYPES = {
 
-    const inputs = container.querySelectorAll(".point-input");
-    const point = {};
+    // un input numerico por variable. el id es compartido entre operaciones
+    // para que el punto escrito se conserve al cambiar de operacion
+    point: {
 
-    for (const input of inputs) {
+        render(field, container) {
 
-        const value = input.value.trim();
+            const grid = document.createElement("div");
+            grid.className = "point-inputs";
 
-        if (value === "") {
-            if (requireAll) return null;
+            currentVariables.forEach((variable) => {
+
+                const group = document.createElement("div");
+                group.className = "input-group";
+
+                const inputId = `point-${variable}`;
+                group.appendChild(createVariableLabel(inputId, variable));
+
+                const input = document.createElement("input");
+                input.type = "number";
+                input.id = inputId;
+                input.className = "point-input";
+                input.dataset.variable = variable;
+                input.placeholder = field.required ? "0" : "opcional";
+                input.step = "any";
+
+                group.appendChild(input);
+                grid.appendChild(group);
+            });
+
+            container.appendChild(grid);
+        },
+
+        read(field, container) {
+
+            const point = {};
+
+            for (const input of container.querySelectorAll(".point-input")) {
+
+                const value = input.value.trim();
+
+                if (value === "") {
+                    if (field.required) {
+                        return { error: "Completa el punto para todas las variables." };
+                    }
+                    continue;
+                }
+
+                point[input.dataset.variable] = value;
+            }
+
+            // si el punto es opcional y esta vacio, no se envia
+            if (Object.keys(point).length === 0) {
+                return { payload: {} };
+            }
+
+            return { payload: { point } };
+        },
+    },
+
+    // una sola variable
+    variable: {
+
+        render(field, container) {
+            container.appendChild(createVariableSelect(`field-${field.key}`));
+        },
+
+        read(field, container) {
+
+            const value = container.querySelector("select").value;
+
+            if (!value) {
+                return { error: "Selecciona una variable." };
+            }
+
+            return { payload: { [field.key]: value } };
+        },
+    },
+
+    // texto libre con variables separadas por coma o espacio, ej. "x, y, x"
+    variableList: {
+
+        render(field, container) {
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.id = `field-${field.key}`;
+            input.placeholder = field.placeholder || "";
+            input.autocomplete = "off";
+            container.appendChild(input);
+        },
+
+        read(field, container) {
+
+            const names = container.querySelector("input").value
+                .split(/[\s,]+/)
+                .filter(Boolean);
+
+            if (names.length === 0) {
+                return { error: "Escribe las variables a derivar, por ejemplo: x, y." };
+            }
+
+            const unknown = names.find((name) => !currentVariables.includes(name));
+
+            if (unknown) {
+                return { error: `La variable '${unknown}' no aparece en la función.` };
+            }
+
+            return { payload: { [field.key]: names } };
+        },
+    },
+
+    // dos listas desplegables, para comparar o relacionar un par de variables
+    variablePair: {
+
+        render(field, container) {
+
+            const row = document.createElement("div");
+            row.className = "point-inputs";
+
+            const first = createVariableSelect(`field-${field.key}-0`);
+            const second = createVariableSelect(`field-${field.key}-1`);
+
+            // por defecto proponemos dos variables distintas
+            if (currentVariables.length > 1) {
+                second.value = currentVariables[1];
+            }
+
+            row.appendChild(first);
+            row.appendChild(second);
+            container.appendChild(row);
+        },
+
+        read(field, container) {
+
+            const [first, second] = container.querySelectorAll("select");
+
+            if (!first.value || !second.value || first.value === second.value) {
+                return { error: "Elige dos variables distintas." };
+            }
+
+            return { payload: { [field.key]: [first.value, second.value] } };
+        },
+    },
+
+};
+
+
+// memoria de lo escrito en los campos, por id. se actualiza antes de cada
+// redibujado y nunca se borra, asi un valor sobrevive aunque pasemos por una
+// operacion que no tiene ese campo (ej. punto -> schwarz -> plano tangente)
+const fieldMemory = {};
+
+
+// lee los valores actuales de los campos visibles, por id
+function snapshotFieldValues() {
+
+    const saved = {};
+
+    operationFields.querySelectorAll("input[id], select[id]").forEach((el) => {
+        saved[el.id] = el.value;
+    });
+
+    return saved;
+}
+
+
+// vuelve a poner en los campos recien dibujados lo que la memoria recuerda
+function restoreFieldValues() {
+
+    for (const [id, value] of Object.entries(fieldMemory)) {
+
+        const el = document.getElementById(id);
+
+        if (!el) continue;
+
+        // en un <select> solo restauramos si la opcion sigue existiendo
+        if (el.tagName === "SELECT" && ![...el.options].some((o) => o.value === value)) {
             continue;
         }
 
-        point[input.dataset.variable] = value;
+        el.value = value;
+    }
+}
+
+
+// dibuja los campos de la operacion elegida segun las variables detectadas
+function renderFields() {
+
+    Object.assign(fieldMemory, snapshotFieldValues());
+    const op = OPERATIONS[operationSelect.value];
+
+    operationFields.innerHTML = "";
+
+    if (currentVariables.length === 0) {
+        operationFields.innerHTML =
+            '<p class="empty-hint">Escribe una función para continuar.</p>';
+        return;
     }
 
-    return point;
+    op.fields.forEach((field, index) => {
+
+        const block = document.createElement("section");
+        block.className = "field-block";
+        block.dataset.fieldIndex = index;
+
+        const title = document.createElement("div");
+        title.className = "section-title";
+
+        const heading = document.createElement("h2");
+        heading.textContent = field.title;
+        title.appendChild(heading);
+
+        if (field.hint) {
+            const hint = document.createElement("span");
+            hint.textContent = field.hint;
+            title.appendChild(hint);
+        }
+
+        block.appendChild(title);
+        FIELD_TYPES[field.type].render(field, block);
+        operationFields.appendChild(block);
+    });
+
+    restoreFieldValues();
+}
+
+
+// lee todos los campos de la operacion y arma lo que se envia al backend.
+// devuelve { payload } o { error }
+function collectPayload(op) {
+
+    const payload = {};
+    const blocks = operationFields.querySelectorAll(".field-block");
+
+    for (let i = 0; i < op.fields.length; i++) {
+
+        const field = op.fields[i];
+        const result = FIELD_TYPES[field.type].read(field, blocks[i]);
+
+        if (result.error) {
+            return { error: result.error };
+        }
+
+        Object.assign(payload, result.payload);
+    }
+
+    return { payload };
 }
 
 
@@ -267,14 +450,20 @@ function readPoint(container, requireAll) {
 // mostrar el resultado (exito: math-field. error: texto plano)
 // ====================================================
 
-function showResult(data) {
+function showResult(data, op) {
 
     if (data.success) {
         resultPlaceholder.hidden = true;
         resultField.hidden = false;
         resultField.value = data.result_latex;
+
+        // nota opcional de la operacion (ej. "se cumple el teorema")
+        const note = op && op.note ? op.note(data) : "";
+        resultNote.textContent = note;
+        resultNote.hidden = !note;
     } else {
         resultField.hidden = true;
+        resultNote.hidden = true;
         resultPlaceholder.hidden = false;
         resultPlaceholder.textContent = data.error;
         resultPlaceholder.classList.add("error");
@@ -285,9 +474,20 @@ function showResult(data) {
 
 function showResultLoading() {
     resultField.hidden = true;
+    resultNote.hidden = true;
     resultPlaceholder.hidden = false;
     resultPlaceholder.classList.remove("error");
     resultPlaceholder.textContent = "Calculando...";
+}
+
+
+// vuelve el panel de resultado a su estado inicial
+function clearResult() {
+    resultField.hidden = true;
+    resultNote.hidden = true;
+    resultPlaceholder.hidden = false;
+    resultPlaceholder.classList.remove("error");
+    resultPlaceholder.textContent = "El resultado aparecerá aquí";
 }
 
 
@@ -298,6 +498,7 @@ function showResultLoading() {
 calculateButton.addEventListener("click", async () => {
 
     const latex = functionInput.getValue("latex").trim();
+    const op = OPERATIONS[operationSelect.value];
 
     if (!latex) {
         showResult({ success: false, error: "Escribe una función." });
@@ -309,54 +510,27 @@ calculateButton.addEventListener("click", async () => {
         return;
     }
 
+    // validamos los campos antes de bloquear el boton
+    const collected = collectPayload(op);
+
+    if (collected.error) {
+        showResult({ success: false, error: collected.error });
+        return;
+    }
+
     calculateButton.disabled = true;
     showResultLoading();
 
     try {
 
-        let response;
-
-        if (operation.value === "limit") {
-
-            const point = readPoint(limitPointInputs, true);
-
-            if (point === null) {
-                showResult({ success: false, error: "Completa el punto para todas las variables." });
-                return;
-            }
-
-            response = await fetch("/api/limit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ latex, point })
-            });
-
-        } else {
-
-            const variable = derivativeVariableSelect.value;
-
-            if (!variable) {
-                showResult({ success: false, error: "Selecciona respecto a qué variable derivar." });
-                return;
-            }
-
-            const point = readPoint(derivativePointInputs, false);
-            const hasPoint = Object.keys(point).length > 0;
-
-            response = await fetch("/api/derivative", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    latex,
-                    variable,
-                    point: hasPoint ? point : null
-                })
-            });
-
-        }
+        const response = await fetch(op.endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ latex, ...collected.payload })
+        });
 
         const data = await response.json();
-        showResult(data);
+        showResult(data, op);
 
         // graficamos la funcion actual, tanto si el calculo tuvo exito como si no
         renderPlot();
@@ -371,12 +545,12 @@ calculateButton.addEventListener("click", async () => {
 
 });
 
+
 // ====================================================
 // grafica (plotly)
 // ====================================================
 
 const plotContainer = document.getElementById("plot-container");
-const canvasPlaceholder = document.querySelector(".canvas-placeholder");
 
 
 // pide los datos de la grafica al backend y la dibuja con plotly.
@@ -425,7 +599,12 @@ function showPlotMessage(text) {
         plotContainer.dataset.hasPlot = "false";
     }
 
-    plotContainer.innerHTML = `<span class="canvas-placeholder">${text}</span>`;
+    const message = document.createElement("span");
+    message.className = "canvas-placeholder";
+    message.textContent = text;
+
+    plotContainer.innerHTML = "";
+    plotContainer.appendChild(message);
 
 }
 
@@ -502,3 +681,11 @@ function plotConfig() {
         responsive: true,
     };
 }
+
+
+// ====================================================
+// arranque
+// ====================================================
+
+buildOperationSelect();
+renderFields();

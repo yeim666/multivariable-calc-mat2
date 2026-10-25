@@ -1,7 +1,7 @@
 import sympy as sp
 import numpy as np
 
-from app.mathcore.operations import get_variables
+from app.mathcore.common import get_variables
 
 
 # genera los puntos numericos para graficar una funcion de 1 o 2 variables.

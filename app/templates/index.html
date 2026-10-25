@@ -32,7 +32,7 @@
                 <span class="logo-nyan">Neko</span><span class="logo-delbrot">Calc</span>
             </h1>
 
-            <p class="topbar-subtitle">Límites y derivadas de funciones multivariables</p>
+            <p class="topbar-subtitle">Cálculo diferencial de funciones multivariables</p>
 
         </header>
 
@@ -47,50 +47,17 @@
 
                 <label for="operation">Operación</label>
 
-                <select id="operation">
-                    <option value="limit">Límite multivariable</option>
-                    <option value="derivative">Derivada parcial</option>
-                </select>
+                <!-- las opciones las genera main.js desde operations.js -->
+                <select id="operation"></select>
 
             </section>
 
 
-            <section id="limit-panel">
-
-                <div class="section-title">
-                    <h2>Punto de aproximación</h2>
-                    <span>variable → valor</span>
-                </div>
-
-                <div id="limit-point-inputs" class="point-inputs">
-                    <p class="empty-hint">Escribe una función para continuar.</p>
-                </div>
-
-            </section>
-
-
-            <section id="derivative-panel" hidden>
-
-                <div class="section-title">
-                    <h2>Derivar respecto a</h2>
-                </div>
-
-                <!-- nota: un <select> nativo no puede renderizar latex dentro de
-                     sus opciones, asi que esta lista se queda como texto plano -->
-                <select id="derivative-variable" class="variable-select">
-                    <option value="">Escribe una función primero</option>
-                </select>
-
-                <div class="section-title">
-                    <h2>Punto de evaluación</h2>
-                    <span>opcional</span>
-                </div>
-
-                <div id="derivative-point-inputs" class="point-inputs">
-                    <p class="empty-hint">Escribe una función para continuar.</p>
-                </div>
-
-            </section>
+            <!-- campos de la operacion elegida: los dibuja main.js
+                 a partir del catalogo de operations.js -->
+            <div id="operation-fields">
+                <p class="empty-hint">Escribe una función para continuar.</p>
+            </div>
 
 
             <button id="calculate" class="calculate-button" type="button">
@@ -122,6 +89,8 @@
                     </span>
 
                 </div>
+
+                <p id="result-note" class="result-note" hidden></p>
 
             </section>
 
@@ -180,6 +149,7 @@
     </div>
 
 
+    <script src="{{ url_for('static', filename='js/operations.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 </body>

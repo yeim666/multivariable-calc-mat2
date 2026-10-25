@@ -63,7 +63,7 @@ html, body {
     grid-template-rows: auto minmax(0, 1fr) auto;
 
     height: 100vh;
-    oveflow: hidden;
+    overflow: hidden;
 }
 
 
@@ -499,4 +499,31 @@ select {
 
 .result-placeholder.error {
     color: var(--error);
+}
+
+
+
+/* ====================================================
+   CAMPOS DINAMICOS Y NOTA DE RESULTADO
+   ==================================================== */
+
+.field-block {
+    margin-bottom: 1.5rem;
+}
+
+
+/* un campo de texto o select suelto ocupa todo el ancho; los pares
+   (point-inputs) ya usan su propia rejilla de dos columnas */
+.field-block > input,
+.field-block > select {
+    margin-bottom: 0;
+}
+
+
+.result-note {
+    margin: 0.6rem 0 0;
+
+    color: var(--cocoa-muted);
+
+    font-size: 0.82rem;
 }

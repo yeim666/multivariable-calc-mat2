@@ -76,3 +76,20 @@ def latex_to_expr(latex_string):
     # para que routes.py lo maneje igual que los errores del parser de texto
     except Exception as e:
         raise ValueError(f"No se pudo interpretar la notación matemática: {e}")
+
+
+# convierte el texto de un valor numerico (ej. "0", "1/2", "pi") en un
+# objeto sympy. pasa por el parser controlado en vez de sympify, para no
+# evaluar texto arbitrario que llegue a la api
+def parse_value(text):
+
+    try:
+        value = parse_expression(str(text))
+    except Exception:
+        raise ValueError(f"Valor no válido: '{text}'")
+
+    # un valor de punto debe ser un numero, no una expresion con variables
+    if value.free_symbols:
+        raise ValueError(f"Valor no válido: '{text}'")
+
+    return value
