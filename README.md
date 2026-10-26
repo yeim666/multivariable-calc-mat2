@@ -13,7 +13,7 @@ Actualmente el proyecto se encuentra en desarrollo.
 * Backend desarrollado con Flask.
 * Cálculos simbólicos utilizando SymPy.
 * Preparado para añadir derivadas parciales y otras operaciones en el futuro.
-* hola 
+ 
 ---
 
 # Requisitos
