@@ -1,13 +1,18 @@
-__pycache__/ 
-*.py[cod]
-.venv
+# entornos virtuales
 venv/
-.env
+.venv/
+
+# caches de python y pytest
+__pycache__/
+*.pyc
 .pytest_cache/
+
+# librerias descargadas con scripts/vendor.py (se regeneran; para
+# versionarlas y desplegar sin npm, quita esta linea)
+app/static/vendor/
+
+# volcados del repositorio y archivos del editor
+repomix-output.xml
 .idea/
 .vscode/
-app/static/vendor/mathlive/
-app/static/vendor/plotly/
-#ignore ts
-hola.md
-repomix-output.xml
+.DS_Store

@@ -39,17 +39,51 @@
 
 
         <!-- ==================== -->
-        <!-- PANEL DE CONTROL       -->
+        <!-- PANEL IZQUIERDO: todo el flujo de trabajo, de arriba a abajo
+             funcion -> operacion -> parametros -> calcular -> resultado -->
         <!-- ==================== -->
 
         <aside class="control-panel">
 
+            <section class="function-section">
+
+                <div class="section-title">
+                    <h2>Función</h2>
+                    <span id="function-hint">f(x, y, ...)</span>
+                </div>
+
+                <math-field
+                    id="function"
+                    class="function-input"
+                    virtual-keyboard-mode="onfocus"
+                >
+                </math-field>
+
+                <p id="variables-feedback" class="variables-feedback" hidden>
+                    <span id="variables-feedback-label" class="feedback-label"></span>
+                    <math-field
+                        id="variables-math"
+                        class="inline-math"
+                        read-only
+                        tabindex="-1"
+                        hidden
+                    >
+                    </math-field>
+                </p>
+
+            </section>
+
+
             <section class="operation-section">
 
-                <label for="operation">Operación</label>
+                <div class="section-title">
+                    <h2>Operación</h2>
+                </div>
 
-                <!-- las opciones las genera main.js desde operations.js -->
-                <select id="operation"></select>
+                <!-- pestañas por unidad (solo se muestran si hay mas de una)
+                     y chips por grupo: los genera main.js desde operations.js -->
+                <div id="unit-tabs" class="unit-tabs" role="tablist" aria-label="Unidad" hidden></div>
+                <div id="operation-chips" class="operation-chips"></div>
 
             </section>
 
@@ -64,46 +98,6 @@
             <button id="calculate" class="calculate-button" type="button">
                 Calcular
             </button>
-
-        </aside>
-
-
-        <!-- ==================== -->
-        <!-- LIENZO (grafica)       -->
-        <!-- ==================== -->
-
-        <main class="canvas">
-
-            <!-- controles de la grafica: rango de cada eje, vista y descarga -->
-            <div id="plot-toolbar" class="plot-toolbar" hidden>
-
-                <div class="range-group">
-                    <span id="x-range-label" class="range-label">x</span>
-                    <input type="number" id="x-min" value="-10" step="any" aria-label="Mínimo del eje x">
-                    <span class="range-sep">a</span>
-                    <input type="number" id="x-max" value="10" step="any" aria-label="Máximo del eje x">
-                </div>
-
-                <div id="y-range-group" class="range-group">
-                    <span id="y-range-label" class="range-label">y</span>
-                    <input type="number" id="y-min" value="-10" step="any" aria-label="Mínimo del eje y">
-                    <span class="range-sep">a</span>
-                    <input type="number" id="y-max" value="10" step="any" aria-label="Máximo del eje y">
-                </div>
-
-                <div id="view-toggle" class="view-toggle" role="group" aria-label="Vista de la gráfica">
-                    <button type="button" data-mode="surface" class="active">Superficie</button>
-                    <button type="button" data-mode="contour">Curvas de nivel</button>
-                </div>
-
-                <button type="button" id="download-plot" class="tool-button" disabled>Descargar PNG</button>
-
-            </div>
-
-
-            <div id="plot-container" class="plot-area">
-                <span class="canvas-placeholder">La gráfica aparecerá aquí</span>
-            </div>
 
 
             <section class="result-section">
@@ -140,44 +134,47 @@
 
             </section>
 
-        </main>
+        </aside>
 
 
         <!-- ==================== -->
-        <!-- BARRA DE FUNCION       -->
+        <!-- LIENZO (grafica a toda la altura)  -->
         <!-- ==================== -->
 
-        <section class="function-bar">
+        <main class="canvas">
 
-            <div class="function-bar-inner">
+            <!-- controles de la grafica: rango de cada eje, vista y descarga -->
+            <div id="plot-toolbar" class="plot-toolbar" hidden>
 
-                <div class="section-title">
-                    <h2>Función</h2>
-                    <span id="function-hint">f(x, y, ...)</span>
+                <div class="range-group">
+                    <span id="x-range-label" class="range-label">x</span>
+                    <input type="number" id="x-min" value="-10" step="any" aria-label="Mínimo del eje x">
+                    <span class="range-sep">a</span>
+                    <input type="number" id="x-max" value="10" step="any" aria-label="Máximo del eje x">
                 </div>
 
-                <math-field
-                    id="function"
-                    class="function-input"
-                    virtual-keyboard-mode="onfocus"
-                >
-                </math-field>
+                <div id="y-range-group" class="range-group">
+                    <span id="y-range-label" class="range-label">y</span>
+                    <input type="number" id="y-min" value="-10" step="any" aria-label="Mínimo del eje y">
+                    <span class="range-sep">a</span>
+                    <input type="number" id="y-max" value="10" step="any" aria-label="Máximo del eje y">
+                </div>
 
-                <p id="variables-feedback" class="variables-feedback" hidden>
-                    <span id="variables-feedback-label" class="feedback-label"></span>
-                    <math-field
-                        id="variables-math"
-                        class="inline-math"
-                        read-only
-                        tabindex="-1"
-                        hidden
-                    >
-                    </math-field>
-                </p>
+                <div id="view-toggle" class="view-toggle" role="group" aria-label="Vista de la gráfica">
+                    <button type="button" data-mode="surface" class="active">Superficie</button>
+                    <button type="button" data-mode="contour">Curvas de nivel</button>
+                </div>
+
+                <button type="button" id="download-plot" class="tool-button" disabled>Descargar PNG</button>
 
             </div>
 
-        </section>
+
+            <div id="plot-container" class="plot-area">
+                <span class="canvas-placeholder">La gráfica aparecerá aquí</span>
+            </div>
+
+        </main>
 
     </div>
 

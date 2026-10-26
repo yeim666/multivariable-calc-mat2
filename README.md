@@ -1,28 +1,56 @@
-# Calculadora Multivariable
+# NekoCalc — Calculadora Multivariable
 
-Aplicación web desarrollada con **Flask** y **SymPy** para calcular límites de funciones multivariables.
+Aplicación web desarrollada con **Flask** y **SymPy** para trabajar con funciones de varias variables: límites, derivadas parciales, gradiente, plano tangente y más, con gráficas 2D/3D interactivas.
 
-El proyecto está pensado como una herramienta sencilla para trabajar con funciones de varias variables desde una interfaz web.
+El proyecto nace como Proyecto Integrador de Matemática II (cálculo diferencial, integral y vectorial de funciones multivariables) y está pensado para crecer unidad por unidad.
 
-Actualmente el proyecto se encuentra en desarrollo.
+Actualmente el proyecto se encuentra en desarrollo. Consulta el [CHANGELOG](CHANGELOG.md) para ver qué cambió en cada versión.
 
 ## Características
 
-* Cálculo de límites multivariables.
-* Interfaz web sencilla.
-* Backend desarrollado con Flask.
-* Cálculos simbólicos utilizando SymPy.
-* Preparado para añadir derivadas parciales y otras operaciones en el futuro.
- 
+* Escritura de funciones en notación matemática (MathLive) con detección automática de variables.
+* Selector de operaciones por unidad y tema; las que no aplican a la función escrita se atenúan y explican el motivo.
+* Gráfica en vivo de funciones de 1 o 2 variables, con rango de ejes editable, vista de superficie o curvas de nivel y descarga como PNG.
+* La gráfica marca el punto de evaluación y dibuja la capa de cada operación (plano tangente, flecha del gradiente).
+* Resultado en notación matemática, con botones para copiarlo como LaTeX o texto.
+* Puntos de evaluación con fracciones y constantes (`1/2`, `pi/2`, `sqrt(2)`).
+* Enter para calcular desde cualquier campo.
+* Funciona sin internet una vez descargadas las librerías del navegador (ver [Modo sin internet](#modo-sin-internet)).
+* API REST sencilla y extensible: agregar una operación nueva no requiere tocar las rutas.
+
+## Operaciones disponibles
+
+| Unidad | Operación | Qué hace |
+| --- | --- | --- |
+| 1 | Límite multivariable | Límite iterado variable por variable en un punto |
+| 1 | Derivada parcial | Respecto a una variable, simbólica o evaluada en un punto |
+| 1 | Derivada de orden superior | Derivadas sucesivas y mixtas (`x, y, x`), simbólicas o evaluadas |
+| 1 | Teorema de Schwarz | Calcula `f_xy` y `f_yx` y verifica si son iguales |
+| 1 | Gradiente | Vector gradiente, simbólico o evaluado en un punto |
+| 1 | Plano tangente y recta normal | A `z = f(x, y)` en un punto |
+
+> **Nota sobre los límites:** el cálculo itera el límite variable por variable (límite iterado). Esto **no** equivale al límite multivariable riguroso, que exige obtener el mismo valor por cualquier trayectoria. Un límite iterado puede existir aunque el límite doble no exista.
+
+### Hoja de ruta
+
+- [x] Límites, derivadas parciales, orden superior, Schwarz, gradiente, plano tangente
+- [ ] Dominio, rango, curvas y superficies de nivel; continuidad
+- [ ] Diferencial total, diferencial exacta y función potencial
+- [ ] Regla de la cadena, derivación implícita y Jacobiano
+- [ ] Derivada direccional, extremos (Hessiano) y multiplicadores de Lagrange
+- [ ] Unidad 2: integrales dobles y triples, áreas, volúmenes, masa y momentos
+- [ ] Unidad 3: funciones vectoriales, campos, divergencia, rotacional, integrales de línea y Green
+
 ---
 
 # Requisitos
 
 Necesitas tener instalado:
 
-* Python 3
+* Python 3.11 o superior
 * pip
 * Git
+* npm (opcional, solo para el [modo sin internet](#modo-sin-internet))
 
 Puedes comprobar que están instalados con:
 
@@ -45,90 +73,40 @@ python3 --version
 Primero clona el repositorio:
 
 ```bash
-git clone https://github.com/yeim666/multivariable-calc-mat2/
+git clone https://github.com/yeim666/multivariable-calc-mat2.git
 ```
 
 Entra en la carpeta:
 
 ```bash
-cd calculadora-web
+cd multivariable-calc-mat2
 ```
 
 Se recomienda utilizar un entorno virtual para evitar instalar las dependencias globalmente.
 
-## Linux
-
-Crear el entorno virtual:
+## Linux y macOS
 
 ```bash
 python3 -m venv venv
-```
-
-Activarlo:
-
-```bash
 source venv/bin/activate
-```
-
-Instalar las dependencias:
-
-```bash
 pip install -r requirements.txt
 ```
-
----
-
-## macOS
-
-Crear el entorno virtual:
-
-```bash
-python3 -m venv venv
-```
-
-Activarlo:
-
-```bash
-source venv/bin/activate
-```
-
-Instalar las dependencias:
-
-```bash
-pip install -r requirements.txt
-```
-
-Dependiendo de la instalación de Python, también puede funcionar:
-
-```bash
-python -m venv venv
-```
-
----
 
 ## Windows
 
-Crear el entorno virtual:
+PowerShell:
 
 ```powershell
 python -m venv venv
-```
-
-Si utilizas PowerShell:
-
-```powershell
 venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-Si utilizas CMD:
+CMD:
 
 ```cmd
+python -m venv venv
 venv\Scripts\activate
-```
-
-Después instala las dependencias:
-
-```powershell
 pip install -r requirements.txt
 ```
 
@@ -152,353 +130,153 @@ En Windows CMD, si las comillas simples causan problemas, utiliza:
 flask --app app:create_app --debug run
 ```
 
+También puedes usar el script incluido (añade `FLASK_DEBUG=1` para el modo de desarrollo):
+
+```bash
+python run.py
+```
+
 Flask debería mostrar una dirección similar a:
 
 ```text
 http://127.0.0.1:5000
 ```
 
-Abre esa dirección en tu navegador.
+Abre esa dirección en tu navegador. Para detener el servidor utiliza `Ctrl + C`.
 
-Para detener el servidor utiliza:
+## Modo sin internet
 
-```text
-Ctrl + C
+La interfaz usa dos librerías del navegador, MathLive (entrada matemática) y Plotly (gráficas), que por defecto se cargan desde un CDN. Para trabajar sin conexión, descárgalas una vez (requiere npm):
+
+```bash
+python scripts/vendor.py
 ```
+
+Los archivos quedan en `app/static/vendor/` y la plantilla los usa automáticamente cuando existen; si borras esa carpeta, vuelve a usar el CDN. La carpeta está en `.gitignore`: si quieres versionarla para desplegar sin npm, quita esa línea.
+
+Las fuentes de Google siguen cargándose en línea; sin conexión se usan las fuentes del sistema.
 
 ---
 
 # Cómo usar la calculadora
 
-1. Abre la aplicación en el navegador.
-
-2. Selecciona la operación que deseas realizar.
-
-3. Para calcular un límite, escribe una función utilizando las variables `x` y `y`.
-
-Por ejemplo:
-
-```text
-x^2 + y^2
-```
-
-4. Introduce el punto al que deben aproximarse las variables.
-
-Por ejemplo:
-
-```text
-x → 0
-y → 0
-```
-
-5. Presiona el botón **Calcular**.
-
-El resultado aparecerá en la parte inferior de la calculadora.
+1. Escribe una función en el campo **Función**, por ejemplo `x^2 + y^2`. Las variables se detectan solas y la gráfica se dibuja en vivo.
+2. Elige una **operación** en el panel (por unidad y tema).
+3. Completa los campos que pide: un punto, la variable a derivar, el orden de derivación, etc. Los puntos aceptan fracciones como `1/2` o constantes como `pi`.
+4. Pulsa **Calcular** (o presiona Enter).
+5. El resultado aparece en el panel, con botones para copiarlo. La gráfica marca el punto y dibuja la capa de la operación.
 
 Ejemplo:
 
 ```text
-Función:
+Función:     x^2 + y^2
+Operación:   Plano tangente y recta normal
+Punto:       x = 1, y = 2
 
-x^2 + y^2
-
-Punto:
-
-(0, 0)
-
-Resultado:
-
-0
+Resultado:   z = 2x + 4y − 5
+             r(t) = (1 + 2t, 2 + 4t, 5 − t)
 ```
 
-Actualmente algunas expresiones o límites multivariables complejos pueden no ser evaluados correctamente, ya que el sistema de cálculo todavía está en desarrollo.
+---
+
+# API
+
+Todas las rutas reciben y devuelven JSON. La función se envía como `latex` (lo que produce MathLive) o como `expression` (texto, por ejemplo `x^2*y`).
+
+Las operaciones responden con:
+
+```json
+{ "success": true, "result": "5", "result_latex": "5" }
+```
+
+Y los errores con:
+
+```json
+{ "success": false, "error": "mensaje para el usuario" }
+```
+
+| Ruta | Parámetros además de la función | Respuesta extra |
+| --- | --- | --- |
+| `POST /api/variables` | — | `variables`, `variables_latex` |
+| `POST /api/limit` | `point` (obligatorio) | — |
+| `POST /api/derivative` | `variable` (obligatorio), `point` | — |
+| `POST /api/higher_derivative` | `variables` (lista, en orden), `point` | — |
+| `POST /api/schwarz` | `variables` (exactamente 2) | `equal` |
+| `POST /api/gradient` | `point` | — |
+| `POST /api/tangent_plane` | `point` (obligatorio, 2 variables) | — |
+| `POST /api/plot` | `x_range`, `y_range`, `point`, `overlay` (`tangent_plane` o `gradient`) | `type`, `x`, `y`, `z`, `marker`, `plane_z`, `gradient_arrow` |
+
+`point` es un objeto `{ "x": "1", "y": "1/2" }` con un valor por variable.
+
+Ejemplo:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/limit \
+  -H "Content-Type: application/json" \
+  -d '{"expression": "x^2 + y^2", "point": {"x": "1", "y": "2"}}'
+```
+
+---
+
+# Cómo agregar una operación
+
+1. **Backend.** Escribe la función en el módulo que corresponda de `app/mathcore/` y regístrala. Recibe la expresión de SymPy y los parámetros del JSON, y devuelve `make_result(...)`:
+
+   ```python
+   # app/mathcore/derivatives.py
+   from app.mathcore.common import make_result
+   from app.mathcore.registry import register
+
+   @register("mi_operacion")
+   def mi_operacion(expr, params):
+       # ...calcula con sympy...
+       return make_result(resultado)
+   ```
+
+   Si creas un módulo nuevo, impórtalo en `app/mathcore/__init__.py` para que el decorador se ejecute. La ruta `/api/mi_operacion` queda disponible sin tocar `routes.py`.
+
+2. **Frontend.** Agrega una entrada en `app/static/js/operations.js` con su unidad, grupo, endpoint y campos (`point`, `variable`, `variableList` o `variablePair`). Opcionalmente `requires` (cantidad de variables), `overlay` (capa en la gráfica) y `note` (texto bajo el resultado).
+
+3. **Pruebas.** Agrega tests en `tests/`.
+
+---
+
+# Pruebas
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
 
 ---
 
 # Estructura del proyecto
 
 ```text
-calculadora-web/
+multivariable-calc-mat2/
 ├── app/
-│   ├── __init__.py
-│   ├── routes.py
-│   ├── calculator.py
-│   │
-│   ├── templates/
-│   │   └── index.html
-│   │
-│   └── static/
-│       ├── css/
-│       │   └── style.css
-│       │
-│       └── js/
-│           └── main.js
-│
+│   ├── __init__.py            # fábrica de la app (create_app)
+│   ├── routes.py              # rutas: /, /api/variables, /api/plot y /api/<operación>
+│   ├── mathcore/
+│   │   ├── common.py          # variables, LaTeX y formato de resultados
+│   │   ├── registry.py        # registro de operaciones (@register)
+│   │   ├── parser.py          # texto/LaTeX → expresión de SymPy
+│   │   ├── limits.py          # límites
+│   │   ├── derivatives.py     # derivadas, orden superior, Schwarz, gradiente
+│   │   ├── geometry.py        # plano tangente y recta normal
+│   │   └── plotting.py        # datos de gráficas 2D/3D, marcador y capas
+│   ├── static/
+│   │   ├── css/style.css
+│   │   └── js/
+│   │       ├── operations.js  # catálogo de operaciones de la interfaz
+│   │       └── main.js        # lógica de la interfaz
+│   └── templates/index.html
+├── scripts/vendor.py          # descarga MathLive y Plotly para uso sin internet
 ├── tests/
-│   └── test_calculator.py
-│
+├── run.py
 ├── requirements.txt
-├── .gitignore
+├── requirements-dev.txt
+├── pytest.ini
+├── CHANGELOG.md
 └── README.md
 ```
-
-## Archivos principales
-
-### `app/__init__.py`
-
-Inicializa la aplicación Flask y registra las rutas.
-
-### `app/routes.py`
-
-Contiene las rutas de Flask y los endpoints de la API.
-
-Por ejemplo:
-
-```text
-/
-```
-
-muestra la página principal.
-
-Mientras que:
-
-```text
-/api/limit
-```
-
-recibe los datos enviados desde JavaScript y solicita el cálculo del límite.
-
-### `app/calculator.py`
-
-Contiene la lógica matemática de la aplicación.
-
-Aquí se utiliza SymPy para interpretar expresiones y realizar los cálculos.
-
-### `app/templates/index.html`
-
-Contiene la estructura de la interfaz.
-
-### `app/static/css/style.css`
-
-Contiene los estilos de la página.
-
-### `app/static/js/main.js`
-
-Controla la interacción de la interfaz y la comunicación con el backend mediante `fetch()`.
-
----
-
-# Contribuir
-
-Las contribuciones son bienvenidas.
-
-Para trabajar en el proyecto sin destruir accidentalmente la rama principal, sigue este flujo.
-
-## 1. Clonar el repositorio
-
-```bash
-git clone https://github.com/yeim666/multivariable-calc-mat2/
-```
-
-Después:
-
-```bash
-cd calculadora-web
-```
-
-Instala las dependencias siguiendo las instrucciones anteriores.
-
----
-
-## 2. Crear una nueva rama
-
-No trabajes directamente sobre `main`.
-
-Crea una rama para tu cambio:
-
-```bash
-git switch -c nombre-de-la-rama
-```
-
-Por ejemplo:
-
-```bash
-git switch -c feat-derivadas-parciales
-```
-
-También puedes utilizar:
-
-```bash
-git checkout -b feat-derivadas-parciales
-```
-
----
-
-## 3. Realizar los cambios
-
-Modifica únicamente lo necesario para la funcionalidad en la que estés trabajando.
-
-Antes de hacer un commit puedes revisar los archivos modificados con:
-
-```bash
-git status
-```
-
----
-
-## 4. Añadir los cambios
-
-```bash
-git add .
-```
-
----
-
-## 5. Crear un commit
-
-Intentamos utilizar mensajes de commit claros.
-
-Formato recomendado:
-
-```text
-tipo: descripción
-```
-
-Algunos tipos:
-
-```text
-feat: nueva funcionalidad
-
-fix: corrección de un error
-
-docs: cambios en documentación
-
-style: cambios visuales o de formato
-
-refactor: reorganización del código
-
-test: cambios relacionados con pruebas
-
-chore: configuración o mantenimiento
-```
-
-Ejemplos:
-
-```bash
-git commit -m "feat: add partial derivative support"
-```
-
-```bash
-git commit -m "fix: validate empty function input"
-```
-
-```bash
-git commit -m "docs: update installation guide"
-```
-
----
-
-## 6. Subir la rama
-
-```bash
-git push -u origin nombre-de-la-rama
-```
-
-Por ejemplo:
-
-```bash
-git push -u origin feat-derivadas-parciales
-```
-
----
-
-## 7. Crear un Pull Request
-
-Desde GitHub, crea un **Pull Request** desde tu rama hacia `main`.
-
-En la descripción explica brevemente:
-
-* Qué cambiaste.
-* Por qué lo cambiaste.
-* Cómo se puede probar.
-
-Después el código puede revisarse antes de integrarlo a la rama principal.
-
----
-
-# Recomendaciones para contribuir
-
-Antes de enviar cambios:
-
-* Comprueba que el programa siga ejecutándose.
-* Prueba manualmente la funcionalidad modificada.
-* No subas el entorno virtual `venv/`.
-* No subas archivos temporales.
-* Evita modificar archivos que no estén relacionados con tu cambio.
-* Intenta mantener el código legible.
-* Añade comentarios cuando una parte del código no sea evidente.
-* Haz commits pequeños y relacionados con un único cambio.
-
----
-
-# Flujo general de la aplicación
-
-```text
-Usuario
-   │
-   ▼
-HTML
-   │
-   ▼
-JavaScript
-   │
-   │ fetch()
-   ▼
-API de Flask
-   │
-   ▼
-calculator.py
-   │
-   ▼
-SymPy
-   │
-   ▼
-Flask devuelve JSON
-   │
-   ▼
-JavaScript
-   │
-   ▼
-Resultado mostrado en HTML
-```
-
----
-
-# Estado del proyecto
-
-Actualmente se está trabajando principalmente en:
-
-* Límites multivariables.
-* Interpretación de expresiones matemáticas.
-* Validación de datos.
-* Mejora de la precisión de los cálculos.
-
-Entre las funcionalidades previstas se encuentran:
-
-* Derivadas parciales.
-* Mejor representación matemática de los resultados.
-* Soporte para más tipos de expresiones.
-* Mejor manejo de errores.
-* Pruebas automatizadas.
-
----
-
-# Tecnologías utilizadas
-
-* Python
-* Flask
-* SymPy
-* HTML
-* CSS
-* JavaScript
-

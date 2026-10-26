@@ -2,7 +2,8 @@
 // elementos del html
 // ====================================================
 
-const operationSelect = document.getElementById("operation");
+const unitTabs = document.getElementById("unit-tabs");
+const operationChips = document.getElementById("operation-chips");
 const operationFields = document.getElementById("operation-fields");
 
 const functionInput = document.getElementById("function");
@@ -51,37 +52,136 @@ function refreshCalculateButton() {
 
 
 // ====================================================
-// selector de operaciones (se llena desde operations.js)
+// selector de operaciones: pestañas por unidad + chips por grupo
+// (se genera desde operations.js)
 // ====================================================
 
-function buildOperationSelect() {
+// operacion y unidad elegidas. por defecto, la primera del catalogo
+let currentOperation = Object.keys(OPERATIONS)[0];
+let currentUnit = OPERATIONS[currentOperation].unit;
 
-    // agrupamos por unidad para que la lista siga ordenada al crecer
+
+// unidades que existen en el catalogo, en orden de aparicion
+function listUnits() {
+    return [...new Set(Object.values(OPERATIONS).map((op) => op.unit))];
+}
+
+
+// dibuja las pestañas de unidad. con una sola unidad no hacen falta
+function renderUnitTabs() {
+
+    const units = listUnits();
+
+    unitTabs.innerHTML = "";
+    unitTabs.hidden = units.length < 2;
+
+    units.forEach((unit) => {
+
+        const tab = document.createElement("button");
+        tab.type = "button";
+        tab.className = "unit-tab";
+        tab.textContent = unit;
+        tab.setAttribute("role", "tab");
+        tab.setAttribute("aria-selected", String(unit === currentUnit));
+
+        tab.addEventListener("click", () => {
+
+            currentUnit = unit;
+            renderUnitTabs();
+            renderChips();
+
+            // si la operacion actual no es de esta unidad, pasamos a la primera de ella
+            if (OPERATIONS[currentOperation].unit !== unit) {
+                const first = Object.keys(OPERATIONS).find((name) => OPERATIONS[name].unit === unit);
+                setOperation(first);
+            }
+        });
+
+        unitTabs.appendChild(tab);
+    });
+}
+
+
+// dibuja los chips de la unidad actual, agrupados por tema
+function renderChips() {
+
+    operationChips.innerHTML = "";
+
     const groups = {};
 
     for (const [name, op] of Object.entries(OPERATIONS)) {
 
-        if (!groups[op.unit]) {
-            const group = document.createElement("optgroup");
-            group.label = op.unit;
-            groups[op.unit] = group;
-            operationSelect.appendChild(group);
+        if (op.unit !== currentUnit) continue;
+
+        if (!groups[op.group]) {
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "chip-group";
+
+            const title = document.createElement("p");
+            title.className = "chip-group-title";
+            title.textContent = op.group;
+
+            const chips = document.createElement("div");
+            chips.className = "chips";
+
+            wrapper.appendChild(title);
+            wrapper.appendChild(chips);
+            operationChips.appendChild(wrapper);
+
+            groups[op.group] = chips;
         }
 
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = op.label;
-        groups[op.unit].appendChild(option);
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip";
+        chip.dataset.op = name;
+        chip.textContent = op.label;
+
+        chip.addEventListener("click", () => setOperation(name));
+
+        groups[op.group].appendChild(chip);
     }
+
+    refreshChips();
 }
 
-operationSelect.addEventListener("change", () => {
+
+// marca la operacion activa y atenua las que no aplican a la funcion
+// actual (con el motivo como tooltip). siguen siendo elegibles: al elegirlas,
+// el panel explica por que no se pueden calcular
+function refreshChips() {
+
+    operationChips.querySelectorAll(".chip").forEach((chip) => {
+
+        const op = OPERATIONS[chip.dataset.op];
+        const message = currentVariables.length === 0 ? null : checkRequirements(op);
+
+        chip.setAttribute("aria-pressed", String(chip.dataset.op === currentOperation));
+        chip.classList.toggle("unavailable", Boolean(message));
+
+        if (message) {
+            chip.title = message;
+        } else {
+            chip.removeAttribute("title");
+        }
+    });
+}
+
+
+// cambia la operacion activa y redibuja lo que depende de ella
+function setOperation(name) {
+
+    currentOperation = name;
+    currentUnit = OPERATIONS[name].unit;
+
+    refreshChips();
     clearResult();
     renderFields();
 
     // quitamos las capas de la operacion anterior (marcador, plano...)
     renderPlot();
-});
+}
 
 
 // ====================================================
@@ -447,7 +547,10 @@ function checkRequirements(op) {
 function renderFields() {
 
     Object.assign(fieldMemory, snapshotFieldValues());
-    const op = OPERATIONS[operationSelect.value];
+    const op = OPERATIONS[currentOperation];
+
+    // las variables pudieron cambiar: actualizamos cuales operaciones aplican
+    refreshChips();
 
     operationFields.innerHTML = "";
 
@@ -677,7 +780,7 @@ calculateButton.addEventListener("click", async () => {
     }
 
     const latex = functionInput.getValue("latex").trim();
-    const op = OPERATIONS[operationSelect.value];
+    const op = OPERATIONS[currentOperation];
 
     if (!latex) {
         showResult({ success: false, error: "Escribe una función." });
@@ -1201,5 +1304,6 @@ function plotConfig() {
 // arranque
 // ====================================================
 
-buildOperationSelect();
+renderUnitTabs();
+renderChips();
 renderFields();

@@ -1,7 +1,8 @@
 // ====================================================
 // catalogo de operaciones
 //
-// cada operacion declara su endpoint y los campos que pide la interfaz.
+// cada operacion declara su unidad y grupo (para el selector), su endpoint
+// y los campos que pide la interfaz.
 // para agregar una operacion nueva basta con sumar una entrada aqui
 // (y registrar su funcion en el backend); main.js dibuja el resto.
 //
@@ -28,6 +29,7 @@ const OPERATIONS = {
     limit: {
         label: "Límite multivariable",
         unit: "Unidad 1",
+        group: "Límites",
         endpoint: "/api/limit",
         fields: [
             { type: "point", title: "Punto de aproximación", hint: "variable → valor", required: true },
@@ -37,6 +39,7 @@ const OPERATIONS = {
     derivative: {
         label: "Derivada parcial",
         unit: "Unidad 1",
+        group: "Derivadas",
         endpoint: "/api/derivative",
         fields: [
             { type: "variable", key: "variable", title: "Derivar respecto a" },
@@ -47,6 +50,7 @@ const OPERATIONS = {
     higher_derivative: {
         label: "Derivada de orden superior",
         unit: "Unidad 1",
+        group: "Derivadas",
         endpoint: "/api/higher_derivative",
         fields: [
             {
@@ -63,6 +67,7 @@ const OPERATIONS = {
     schwarz: {
         label: "Teorema de Schwarz",
         unit: "Unidad 1",
+        group: "Derivadas",
         endpoint: "/api/schwarz",
         requires: { min: 2, message: "El teorema de Schwarz necesita una función de al menos 2 variables." },
         fields: [
@@ -76,6 +81,7 @@ const OPERATIONS = {
     gradient: {
         label: "Gradiente",
         unit: "Unidad 1",
+        group: "Gradiente y geometría",
         endpoint: "/api/gradient",
         overlay: "gradient",
         fields: [
@@ -86,6 +92,7 @@ const OPERATIONS = {
     tangent_plane: {
         label: "Plano tangente y recta normal",
         unit: "Unidad 1",
+        group: "Gradiente y geometría",
         endpoint: "/api/tangent_plane",
         overlay: "tangent_plane",
         requires: { min: 2, max: 2, message: "El plano tangente requiere una función de exactamente 2 variables." },
