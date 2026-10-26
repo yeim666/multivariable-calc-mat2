@@ -14,6 +14,13 @@
 //
 // note(data) es opcional: devuelve un texto breve que se muestra
 // debajo del resultado (ej. si se cumplio una verificacion)
+//
+// requires es opcional: cantidad de variables que necesita la operacion
+// ({ min, max, message }). si la funcion no lo cumple, la interfaz lo avisa
+// y bloquea el boton Calcular en vez de esperar al error del servidor
+//
+// overlay es opcional: capa extra que la grafica dibuja sobre la superficie
+// en el punto de evaluacion ("tangent_plane" o "gradient")
 // ====================================================
 
 const OPERATIONS = {
@@ -57,6 +64,7 @@ const OPERATIONS = {
         label: "Teorema de Schwarz",
         unit: "Unidad 1",
         endpoint: "/api/schwarz",
+        requires: { min: 2, message: "El teorema de Schwarz necesita una función de al menos 2 variables." },
         fields: [
             { type: "variablePair", key: "variables", title: "Derivadas mixtas a comparar" },
         ],
@@ -69,6 +77,7 @@ const OPERATIONS = {
         label: "Gradiente",
         unit: "Unidad 1",
         endpoint: "/api/gradient",
+        overlay: "gradient",
         fields: [
             { type: "point", title: "Punto de evaluación", hint: "opcional", required: false },
         ],
@@ -78,6 +87,8 @@ const OPERATIONS = {
         label: "Plano tangente y recta normal",
         unit: "Unidad 1",
         endpoint: "/api/tangent_plane",
+        overlay: "tangent_plane",
+        requires: { min: 2, max: 2, message: "El plano tangente requiere una función de exactamente 2 variables." },
         fields: [
             { type: "point", title: "Punto de tangencia", hint: "(a, b)", required: true },
         ],

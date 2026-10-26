@@ -14,8 +14,9 @@
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
-    <script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
-    <script defer src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <!-- mathlive y plotly: copia local si existe (scripts/vendor.py), si no, cdn -->
+    <script defer src="{{ vendor_url('mathlive/mathlive.min.js', 'https://cdn.jsdelivr.net/npm/mathlive') }}"></script>
+    <script defer src="{{ vendor_url('plotly/plotly.min.js', 'https://cdn.plot.ly/plotly-2.35.2.min.js') }}"></script>
 </head>
 
 <body>
@@ -64,11 +65,56 @@
                 Calcular
             </button>
 
+        </aside>
+
+
+        <!-- ==================== -->
+        <!-- LIENZO (grafica)       -->
+        <!-- ==================== -->
+
+        <main class="canvas">
+
+            <!-- controles de la grafica: rango de cada eje, vista y descarga -->
+            <div id="plot-toolbar" class="plot-toolbar" hidden>
+
+                <div class="range-group">
+                    <span id="x-range-label" class="range-label">x</span>
+                    <input type="number" id="x-min" value="-10" step="any" aria-label="Mínimo del eje x">
+                    <span class="range-sep">a</span>
+                    <input type="number" id="x-max" value="10" step="any" aria-label="Máximo del eje x">
+                </div>
+
+                <div id="y-range-group" class="range-group">
+                    <span id="y-range-label" class="range-label">y</span>
+                    <input type="number" id="y-min" value="-10" step="any" aria-label="Mínimo del eje y">
+                    <span class="range-sep">a</span>
+                    <input type="number" id="y-max" value="10" step="any" aria-label="Máximo del eje y">
+                </div>
+
+                <div id="view-toggle" class="view-toggle" role="group" aria-label="Vista de la gráfica">
+                    <button type="button" data-mode="surface" class="active">Superficie</button>
+                    <button type="button" data-mode="contour">Curvas de nivel</button>
+                </div>
+
+                <button type="button" id="download-plot" class="tool-button" disabled>Descargar PNG</button>
+
+            </div>
+
+
+            <div id="plot-container" class="plot-area">
+                <span class="canvas-placeholder">La gráfica aparecerá aquí</span>
+            </div>
+
 
             <section class="result-section">
 
                 <div class="section-title">
                     <h2>Resultado</h2>
+
+                    <div class="result-actions">
+                        <button type="button" id="copy-latex" class="tool-button" disabled>Copiar LaTeX</button>
+                        <button type="button" id="copy-text" class="tool-button" disabled>Copiar texto</button>
+                    </div>
                 </div>
 
                 <div id="result" class="result">
@@ -93,19 +139,6 @@
                 <p id="result-note" class="result-note" hidden></p>
 
             </section>
-
-        </aside>
-
-
-        <!-- ==================== -->
-        <!-- LIENZO (grafica)       -->
-        <!-- ==================== -->
-
-        <main class="canvas">
-
-            <div id="plot-container" class="plot-container">
-                <span class="canvas-placeholder">La gráfica aparecerá aquí</span>
-            </div>
 
         </main>
 

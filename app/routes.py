@@ -80,10 +80,16 @@ def plot():
         expr = get_expr_from_request(data)
 
         # rango de graficado opcional, con valores por defecto razonables
-        x_range = tuple(data.get("x_range", (-10, 10)))
-        y_range = tuple(data.get("y_range", (-10, 10)))
+        x_range = data.get("x_range") or (-10, 10)
+        y_range = data.get("y_range") or (-10, 10)
 
-        return generate_plot_data(expr, x_range=x_range, y_range=y_range)
+        return generate_plot_data(
+            expr,
+            x_range=x_range,
+            y_range=y_range,
+            point=data.get("point"),
+            overlay=data.get("overlay"),
+        )
 
     return handle_api(action, "/api/plot", "No se pudo generar la gráfica.")
 

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NekoCalc — Calculadora Multivariable</title>
+
+    <!-- Fredoka: logo. Plus Jakarta Sans: titulos de seccion. Inter: interfaz general -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- mathlive y plotly: copia local si existe (scripts/vendor.py), si no, cdn -->
+    <script defer src="{{ vendor_url('mathlive/mathlive.min.js', 'https://cdn.jsdelivr.net/npm/mathlive') }}"></script>
+    <script defer src="{{ vendor_url('plotly/plotly.min.js', 'https://cdn.plot.ly/plotly-2.35.2.min.js') }}"></script>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- ==================== -->
+        <!-- BARRA SUPERIOR / LOGO  -->
+        <!-- ==================== -->
+
+        <header class="topbar">
+
+            <h1 class="logo">
+                <span class="logo-nyan">Neko</span><span class="logo-delbrot">Calc</span>
+            </h1>
+
+            <p class="topbar-subtitle">Cálculo diferencial de funciones multivariables</p>
+
+        </header>
+
+
+        <!-- ==================== -->
+        <!-- PANEL DE CONTROL       -->
+        <!-- ==================== -->
+
+        <aside class="control-panel">
+
+            <section class="operation-section">
+
+                <label for="operation">Operación</label>
+
+                <!-- las opciones las genera main.js desde operations.js -->
+                <select id="operation"></select>
+
+            </section>
+
+
+            <!-- campos de la operacion elegida: los dibuja main.js
+                 a partir del catalogo de operations.js -->
+            <div id="operation-fields">
+                <p class="empty-hint">Escribe una función para continuar.</p>
+            </div>
+
+
+            <button id="calculate" class="calculate-button" type="button">
+                Calcular
+            </button>
+
+        </aside>
+
+
+        <!-- ==================== -->
+        <!-- LIENZO (grafica)       -->
+        <!-- ==================== -->
+
+        <main class="canvas">
+
+            <!-- controles de la grafica: rango de cada eje, vista y descarga -->
+            <div id="plot-toolbar" class="plot-toolbar" hidden>
+
+                <div class="range-group">
+                    <span id="x-range-label" class="range-label">x</span>
+                    <input type="number" id="x-min" value="-10" step="any" aria-label="Mínimo del eje x">
+                    <span class="range-sep">a</span>
+                    <input type="number" id="x-max" value="10" step="any" aria-label="Máximo del eje x">
+                </div>
+
+                <div id="y-range-group" class="range-group">
+                    <span id="y-range-label" class="range-label">y</span>
+                    <input type="number" id="y-min" value="-10" step="any" aria-label="Mínimo del eje y">
+                    <span class="range-sep">a</span>
+                    <input type="number" id="y-max" value="10" step="any" aria-label="Máximo del eje y">
+                </div>
+
+                <div id="view-toggle" class="view-toggle" role="group" aria-label="Vista de la gráfica">
+                    <button type="button" data-mode="surface" class="active">Superficie</button>
+                    <button type="button" data-mode="contour">Curvas de nivel</button>
+                </div>
+
+                <button type="button" id="download-plot" class="tool-button" disabled>Descargar PNG</button>
+
+            </div>
+
+
+            <div id="plot-container" class="plot-area">
+                <span class="canvas-placeholder">La gráfica aparecerá aquí</span>
+            </div>
+
+
+            <section class="result-section">
+
+                <div class="section-title">
+                    <h2>Resultado</h2>
+
+                    <div class="result-actions">
+                        <button type="button" id="copy-latex" class="tool-button" disabled>Copiar LaTeX</button>
+                        <button type="button" id="copy-text" class="tool-button" disabled>Copiar texto</button>
+                    </div>
+                </div>
+
+                <div id="result" class="result">
+
+                    <!-- campo matematico de solo lectura: aqui se renderiza
+                         el resultado real en notacion matematica -->
+                    <math-field
+                        id="result-field"
+                        class="result-field"
+                        read-only
+                        tabindex="-1"
+                        hidden
+                    >
+                    </math-field>
+
+                    <span id="result-placeholder" class="result-placeholder">
+                        El resultado aparecerá aquí
+                    </span>
+
+                </div>
+
+                <p id="result-note" class="result-note" hidden></p>
+
+            </section>
+
+        </main>
+
+
+        <!-- ==================== -->
+        <!-- BARRA DE FUNCION       -->
+        <!-- ==================== -->
+
+        <section class="function-bar">
+
+            <div class="function-bar-inner">
+
+                <div class="section-title">
+                    <h2>Función</h2>
+                    <span id="function-hint">f(x, y, ...)</span>
+                </div>
+
+                <math-field
+                    id="function"
+                    class="function-input"
+                    virtual-keyboard-mode="onfocus"
+                >
+                </math-field>
+
+                <p id="variables-feedback" class="variables-feedback" hidden>
+                    <span id="variables-feedback-label" class="feedback-label"></span>
+                    <math-field
+                        id="variables-math"
+                        class="inline-math"
+                        read-only
+                        tabindex="-1"
+                        hidden
+                    >
+                    </math-field>
+                </p>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <script src="{{ url_for('static', filename='js/operations.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+
+</html>

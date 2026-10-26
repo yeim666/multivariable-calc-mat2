@@ -158,16 +158,25 @@ math-field:focus-within {
     grid-area: canvas;
 
     display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
 
     padding: 1.6rem;
 
     min-height: 0;
+
+    /* si la ventana es baja, el lienzo se desplaza por dentro
+       para poder llegar al resultado */
+    overflow-y: auto;
 }
 
 
-.plot-container {
+/* ojo: no llamar a este contenedor "plot-container": plotly usa esa misma
+   clase para un div interno suyo y nuestros estilos se le aplicarian tambien */
+.plot-area {
+    flex: 1 1 0;
+    min-height: 320px;
     width: 100%;
-    height: 100%;
 
     display: flex;
     align-items: center;
@@ -216,6 +225,8 @@ math-field:focus-within {
 
 @media (max-width: 900px) {
 
+    /* en pantallas estrechas todo se apila y la pagina se desplaza:
+       sin esto, el alto fijo de 100vh recortaba lo que no cabia */
     .app {
         grid-template-areas:
             "topbar"
@@ -223,15 +234,22 @@ math-field:focus-within {
             "canvas"
             "function";
         grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
     }
 
     .control-panel {
         border-right: none;
         border-bottom: 1px solid var(--blush);
+
+        overflow-y: visible;
     }
 
     .canvas {
-        min-height: 45vh;
+        min-height: 90vh;
     }
 
 }
@@ -378,7 +396,7 @@ select {
 
 
 .result-field {
-    font-size: 1.15rem;
+    font-size: 1.5rem;
 }
 
 
@@ -476,9 +494,12 @@ select {
 
 .result {
     min-height: 60px;
+    max-height: 26vh;
 
     display: flex;
     align-items: center;
+
+    overflow: auto;
 
     padding: 0.9rem 1rem;
 
@@ -526,4 +547,165 @@ select {
     color: var(--cocoa-muted);
 
     font-size: 0.82rem;
+}
+
+
+/* ====================================================
+   BARRA DE CONTROLES DE LA GRAFICA
+   ==================================================== */
+
+.plot-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1.2rem;
+}
+
+
+.plot-toolbar[hidden] {
+    display: none;
+}
+
+
+.range-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+
+.range-group[hidden] {
+    display: none;
+}
+
+
+.range-label,
+.range-sep {
+    color: var(--cocoa-muted);
+
+    font-size: 0.82rem;
+}
+
+
+.range-label {
+    font-weight: 600;
+    color: var(--cocoa);
+}
+
+
+/* inputs de rango: mas compactos que los de los campos de operacion */
+.range-group input {
+    width: 4.6rem;
+    padding: 0.4rem 0.5rem;
+
+    font-size: 0.82rem;
+}
+
+
+.range-group input[aria-invalid="true"] {
+    border-color: var(--error);
+}
+
+
+/* interruptor superficie / curvas de nivel */
+.view-toggle {
+    display: flex;
+
+    border: 1px solid var(--blush);
+    border-radius: var(--radius);
+
+    overflow: hidden;
+}
+
+
+.view-toggle[hidden] {
+    display: none;
+}
+
+
+.view-toggle button {
+    padding: 0.4rem 0.75rem;
+
+    border: none;
+    background: var(--panel);
+    color: var(--cocoa-muted);
+
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+
+    cursor: pointer;
+}
+
+
+.view-toggle button.active {
+    background: var(--blush);
+    color: var(--cocoa);
+}
+
+
+/* botones pequeños (copiar, descargar) */
+.tool-button {
+    padding: 0.4rem 0.75rem;
+
+    border: 1px solid var(--blush);
+    border-radius: var(--radius);
+
+    background: var(--panel);
+    color: var(--cocoa);
+
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+
+    cursor: pointer;
+
+    transition: background var(--transition);
+}
+
+
+.tool-button:hover:not(:disabled) {
+    background: var(--cream);
+}
+
+
+.tool-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+.plot-toolbar .tool-button {
+    margin-left: auto;
+}
+
+
+.result-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+
+/* el resultado vive bajo la grafica, sin el margen de seccion del panel lateral */
+.canvas .result-section {
+    margin-bottom: 0;
+}
+
+
+/* aviso cuando la operacion no aplica a la funcion escrita */
+.field-warning {
+    margin: 0 0 1.5rem;
+    padding: 0.85rem;
+
+    border: 1px solid var(--error);
+    border-radius: var(--radius);
+
+    color: var(--error);
+
+    font-size: 0.82rem;
+}
+
+
+/* con una grafica dibujada, el contenedor deja de ser flex (solo centra el
+   mensaje de relleno): plotly se ajusta al tamaño completo del recuadro */
+.plot-area[data-has-plot="true"] {
+    display: block;
 }
