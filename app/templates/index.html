@@ -35,6 +35,18 @@
 
             <p class="topbar-subtitle">Cálculo diferencial de funciones multivariables</p>
 
+            <div class="topbar-actions no-print">
+                <label class="topbar-select">
+                    <span>Ejemplos</span>
+                    <select id="examples" aria-label="Cargar un ejemplo">
+                        <option value="">Cargar un ejemplo…</option>
+                    </select>
+                </label>
+                <button type="button" id="practice-open" class="tool-button">Práctica guiada</button>
+                <button type="button" id="history-open" class="tool-button">Historial</button>
+                <button type="button" id="print-report" class="tool-button">Guardar como PDF</button>
+            </div>
+
         </header>
 
 
@@ -95,7 +107,7 @@
             </div>
 
 
-            <button id="calculate" class="calculate-button" type="button">
+            <button id="calculate" class="calculate-button no-print" type="button">
                 Calcular
             </button>
 
@@ -131,6 +143,22 @@
                 </div>
 
                 <p id="result-note" class="result-note" hidden></p>
+                <ul id="result-caveats" class="result-caveats" hidden></ul>
+
+            </section>
+
+
+            <section id="procedure-section" class="procedure-section" hidden>
+
+                <div class="section-title">
+                    <h2>Procedimiento</h2>
+                    <span>operaciones simbólicas</span>
+                </div>
+
+                <ol id="procedure-steps" class="procedure-steps"></ol>
+                <p class="procedure-disclaimer">
+                    Los procedimientos describen operaciones simbólicas y no constituyen un tutor universal.
+                </p>
 
             </section>
 
@@ -177,6 +205,34 @@
         </main>
 
     </div>
+
+
+    <dialog id="practice-dialog" class="app-dialog">
+        <form method="dialog" class="dialog-body">
+            <h2 id="practice-title">Práctica guiada</h2>
+            <p id="practice-prompt"></p>
+            <p id="practice-note" class="result-note"></p>
+            <p id="practice-hint" class="practice-hint" hidden></p>
+            <div class="dialog-actions">
+                <button type="button" id="practice-load" class="calculate-button dialog-primary">Cargar ejercicio</button>
+                <button type="button" id="practice-hint-button" class="tool-button">Mostrar pista</button>
+                <button value="close" class="tool-button">Cerrar</button>
+            </div>
+        </form>
+    </dialog>
+
+
+    <dialog id="history-dialog" class="app-dialog">
+        <form method="dialog" class="dialog-body">
+            <h2>Historial local</h2>
+            <p class="result-note">El historial se guarda solo en el navegador. No se envía al servidor.</p>
+            <ul id="history-list" class="history-list"></ul>
+            <div class="dialog-actions">
+                <button type="button" id="history-clear" class="tool-button">Vaciar historial</button>
+                <button value="close" class="tool-button">Cerrar</button>
+            </div>
+        </form>
+    </dialog>
 
 
     <script src="{{ url_for('static', filename='js/operations.js') }}"></script>

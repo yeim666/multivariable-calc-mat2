@@ -21,6 +21,26 @@ const resultNote = document.getElementById("result-note");
 const copyLatexButton = document.getElementById("copy-latex");
 const copyTextButton = document.getElementById("copy-text");
 
+const resultCaveats = document.getElementById("result-caveats");
+const procedureSection = document.getElementById("procedure-section");
+const procedureSteps = document.getElementById("procedure-steps");
+
+const examplesSelect = document.getElementById("examples");
+const practiceOpenButton = document.getElementById("practice-open");
+const practiceDialog = document.getElementById("practice-dialog");
+const practiceTitle = document.getElementById("practice-title");
+const practicePrompt = document.getElementById("practice-prompt");
+const practiceNote = document.getElementById("practice-note");
+const practiceHint = document.getElementById("practice-hint");
+const practiceLoadButton = document.getElementById("practice-load");
+const practiceHintButton = document.getElementById("practice-hint-button");
+
+const historyOpenButton = document.getElementById("history-open");
+const historyDialog = document.getElementById("history-dialog");
+const historyList = document.getElementById("history-list");
+const historyClearButton = document.getElementById("history-clear");
+const printReportButton = document.getElementById("print-report");
+
 // controles de la grafica
 const plotToolbar = document.getElementById("plot-toolbar");
 const xMinInput = document.getElementById("x-min");
@@ -484,6 +504,80 @@ const FIELD_TYPES = {
         },
     },
 
+    direction: {
+
+        render(field, container) {
+
+            const grid = document.createElement("div");
+            grid.className = "point-inputs";
+
+            currentVariables.forEach((variable, index) => {
+
+                const group = document.createElement("div");
+                group.className = "input-group";
+
+                const inputId = `dir-${variable}`;
+                group.appendChild(createVariableLabel(inputId, variable));
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.id = inputId;
+                input.className = "direction-input";
+                input.dataset.variable = variable;
+                input.placeholder = index === 0 ? "1" : "0";
+                input.autocomplete = "off";
+                input.spellcheck = false;
+
+                group.appendChild(input);
+                grid.appendChild(group);
+            });
+
+            container.appendChild(grid);
+        },
+
+        read(field, container) {
+
+            const direction = {};
+
+            for (const input of container.querySelectorAll(".direction-input")) {
+
+                const value = input.value.trim();
+
+                if (value === "") {
+                    return { error: "Completa todas las componentes de la dirección." };
+                }
+
+                direction[input.dataset.variable] = value;
+            }
+
+            return { payload: { direction } };
+        },
+    },
+
+    math: {
+
+        render(field, container) {
+
+            const mf = document.createElement("math-field");
+            mf.id = `field-${field.key}`;
+            mf.className = "function-input";
+            mf.setAttribute("virtual-keyboard-mode", "onfocus");
+            container.appendChild(mf);
+        },
+
+        read(field, container) {
+
+            const mf = container.querySelector("math-field");
+            const latex = (mf.getValue ? mf.getValue("latex") : mf.value).trim();
+
+            if (!latex && field.required) {
+                return { error: "Escribe la restricción." };
+            }
+
+            return { payload: { [field.key]: latex, [`${field.key}_is_latex`]: true } };
+        },
+    },
+
 };
 
 
@@ -498,8 +592,10 @@ function snapshotFieldValues() {
 
     const saved = {};
 
-    operationFields.querySelectorAll("input[id], select[id]").forEach((el) => {
-        saved[el.id] = el.value;
+    operationFields.querySelectorAll("input[id], select[id], math-field[id]").forEach((el) => {
+        saved[el.id] = el.tagName === "MATH-FIELD" && el.getValue
+            ? el.getValue("latex")
+            : el.value;
     });
 
     return saved;
@@ -643,6 +739,9 @@ function showResult(data, op) {
         const note = op && op.note ? op.note(data) : "";
         resultNote.textContent = note;
         resultNote.hidden = !note;
+
+        renderCaveats(data.caveats);
+        renderProcedure(data.procedure);
     } else {
         resultField.hidden = true;
         resultNote.hidden = true;
@@ -652,6 +751,8 @@ function showResult(data, op) {
 
         lastResult = null;
         setCopyEnabled(false);
+        renderCaveats();
+        renderProcedure();
     }
 
 }
@@ -729,6 +830,82 @@ function showResultLoading() {
     resultPlaceholder.textContent = "Calculando...";
     lastResult = null;
     setCopyEnabled(false);
+    renderCaveats();
+    renderProcedure();
+}
+
+
+function renderCaveats(caveats) {
+
+    resultCaveats.innerHTML = "";
+
+    if (!caveats || caveats.length === 0) {
+        resultCaveats.hidden = true;
+        return;
+    }
+
+    caveats.forEach((text) => {
+        const item = document.createElement("li");
+        item.textContent = text;
+        resultCaveats.appendChild(item);
+    });
+
+    resultCaveats.hidden = false;
+}
+
+
+function renderProcedure(procedure) {
+
+    procedureSteps.innerHTML = "";
+
+    if (!procedure || procedure.length === 0) {
+        procedureSection.hidden = true;
+        return;
+    }
+
+    procedure.forEach((item) => {
+
+        const step = document.createElement("li");
+
+        const title = document.createElement("p");
+        title.className = "procedure-title";
+        if (item.title) {
+            const titleText = document.createElement("span");
+            titleText.textContent = item.title;
+            title.appendChild(titleText);
+        }
+
+        if (item.title_latex) {
+            const titleMath = document.createElement("math-field");
+            titleMath.className = "procedure-title-math";
+            titleMath.setAttribute("read-only", "");
+            titleMath.tabIndex = -1;
+            titleMath.value = item.title_latex;
+            title.appendChild(titleMath);
+        }
+
+        step.appendChild(title);
+
+        if (item.latex) {
+            const math = document.createElement("math-field");
+            math.className = "inline-math procedure-math";
+            math.setAttribute("read-only", "");
+            math.tabIndex = -1;
+            math.value = item.latex;
+            step.appendChild(math);
+        }
+
+        if (item.text) {
+            const text = document.createElement("p");
+            text.className = "procedure-text";
+            text.textContent = item.text;
+            step.appendChild(text);
+        }
+
+        procedureSteps.appendChild(step);
+    });
+
+    procedureSection.hidden = false;
 }
 
 
@@ -741,6 +918,8 @@ function clearResult() {
     resultPlaceholder.textContent = "El resultado aparecerá aquí";
     lastResult = null;
     setCopyEnabled(false);
+    renderCaveats();
+    renderProcedure();
 }
 
 
@@ -818,7 +997,12 @@ calculateButton.addEventListener("click", async () => {
         // graficamos la funcion actual. si el calculo tuvo exito, se marca
         // el punto y se agrega la capa de la operacion (plano tangente...)
         if (data.success) {
-            renderPlot({ point: collected.payload.point, overlay: op.overlay });
+            renderPlot({
+                point: collected.payload.point,
+                overlay: op.overlay,
+                direction: collected.payload.direction,
+            });
+            saveHistoryEntry(latex, op, collected.payload, data);
         } else {
             renderPlot();
         }
@@ -947,6 +1131,7 @@ async function renderPlot(options = {}) {
                 y_range: yRange,
                 point: options.point || null,
                 overlay: options.overlay || null,
+                direction: options.direction || null,
             })
         });
 
@@ -1067,6 +1252,7 @@ function buildLineTraces(data) {
         y: data.y,
         type: "scatter",
         mode: "lines",
+        connectgaps: false,
         line: { color: "#e48aae", width: 2.5 } // sakura
     }];
 
@@ -1111,10 +1297,12 @@ function buildSurfaceTraces(data) {
         });
     }
 
-    // flecha del gradiente: linea con un punto grande en la punta
-    if (data.gradient_arrow) {
+    // flecha del gradiente o de la derivada direccional
+    const arrow = data.gradient_arrow || data.directional_arrow;
+
+    if (arrow) {
         traces.push({
-            ...data.gradient_arrow,
+            ...arrow,
             type: "scatter3d",
             mode: "lines+markers",
             line: { color: "#3e2a2e", width: 6 },
@@ -1167,10 +1355,12 @@ function buildContourTraces(data) {
         });
     }
 
-    if (data.gradient_arrow) {
+    const arrow = data.gradient_arrow || data.directional_arrow;
+
+    if (arrow) {
         traces.push({
-            x: data.gradient_arrow.x,
-            y: data.gradient_arrow.y,
+            x: arrow.x,
+            y: arrow.y,
             type: "scatter",
             mode: "lines+markers",
             line: { color: "#3e2a2e", width: 3 },
@@ -1307,3 +1497,192 @@ function plotConfig() {
 renderUnitTabs();
 renderChips();
 renderFields();
+setupExamples();
+setupPractice();
+setupHistory();
+setupPrint();
+
+
+const HISTORY_KEY = "nekocalc-history";
+const HISTORY_LIMIT = 30;
+
+
+async function loadScenario(scenario) {
+
+    functionInput.value = scenario.latex || "";
+    await detectVariables();
+
+    if (scenario.operation && OPERATIONS[scenario.operation]) {
+        currentUnit = OPERATIONS[scenario.operation].unit;
+        renderUnitTabs();
+        renderChips();
+        setOperation(scenario.operation);
+    }
+
+    Object.entries(scenario.point || {}).forEach(([name, value]) => {
+        const input = document.getElementById(`point-${name}`);
+        if (input) input.value = value;
+    });
+
+    Object.entries(scenario.direction || {}).forEach(([name, value]) => {
+        const input = document.getElementById(`dir-${name}`);
+        if (input) input.value = value;
+    });
+
+    Object.entries(scenario.fields || {}).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+    });
+
+    if (scenario.constraint) {
+        const mf = document.getElementById("field-constraint");
+        if (mf) mf.value = scenario.constraint;
+    }
+
+    Object.assign(fieldMemory, snapshotFieldValues());
+}
+
+
+function setupExamples() {
+
+    EXAMPLES.forEach((example, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = example.label;
+        examplesSelect.appendChild(option);
+    });
+
+    examplesSelect.addEventListener("change", async () => {
+        const example = EXAMPLES[examplesSelect.value];
+        if (!example) return;
+        await loadScenario(example);
+        examplesSelect.value = "";
+    });
+}
+
+
+function setupPractice() {
+
+    practiceTitle.textContent = PRACTICE.title;
+    practicePrompt.textContent = PRACTICE.prompt.replace(/\\\\/g, "\\");
+    practiceNote.textContent = PRACTICE.note;
+    practiceHint.textContent = PRACTICE.hint;
+
+    practiceOpenButton.addEventListener("click", () => {
+        practiceHint.hidden = true;
+        practiceHintButton.textContent = "Mostrar pista";
+        practiceDialog.showModal();
+    });
+
+    practiceHintButton.addEventListener("click", () => {
+        const visible = !practiceHint.hidden;
+        practiceHint.hidden = visible;
+        practiceHintButton.textContent = visible ? "Mostrar pista" : "Ocultar pista";
+    });
+
+    practiceLoadButton.addEventListener("click", async () => {
+        await loadScenario(PRACTICE);
+        practiceDialog.close();
+    });
+}
+
+
+function readHistory() {
+
+    try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+
+function writeHistory(entries) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, HISTORY_LIMIT)));
+}
+
+
+function saveHistoryEntry(latex, op, payload, data) {
+
+    const entries = readHistory();
+
+    entries.unshift({
+        ts: Date.now(),
+        latex,
+        operation: currentOperation,
+        label: op.label,
+        payload,
+        result: data.result,
+        result_latex: data.result_latex,
+    });
+
+    writeHistory(entries);
+}
+
+
+function setupHistory() {
+
+    historyOpenButton.addEventListener("click", () => {
+        renderHistoryList();
+        historyDialog.showModal();
+    });
+
+    historyClearButton.addEventListener("click", () => {
+        writeHistory([]);
+        renderHistoryList();
+    });
+}
+
+
+function renderHistoryList() {
+
+    const entries = readHistory();
+    historyList.innerHTML = "";
+
+    if (entries.length === 0) {
+        const empty = document.createElement("li");
+        empty.textContent = "Todavía no hay cálculos guardados en este navegador.";
+        historyList.appendChild(empty);
+        return;
+    }
+
+    entries.forEach((entry, index) => {
+
+        const item = document.createElement("li");
+        const when = new Date(entry.ts).toLocaleString();
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "history-item";
+        button.innerHTML = `<strong>${entry.label}</strong><span>${when}</span>`;
+
+        button.addEventListener("click", async () => {
+            await loadScenario({
+                latex: entry.latex,
+                operation: entry.operation,
+                point: entry.payload && entry.payload.point,
+                direction: entry.payload && entry.payload.direction,
+                constraint: entry.payload && entry.payload.constraint,
+            });
+            historyDialog.close();
+        });
+
+        item.appendChild(button);
+        historyList.appendChild(item);
+        void index;
+    });
+}
+
+
+function setupPrint() {
+
+    printReportButton.addEventListener("click", () => {
+        document.body.classList.add("printing");
+        window.print();
+    });
+
+    window.addEventListener("afterprint", () => {
+        document.body.classList.remove("printing");
+    });
+}

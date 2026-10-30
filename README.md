@@ -10,10 +10,12 @@ Actualmente el proyecto se encuentra en desarrollo. Consulta el [CHANGELOG](CHAN
 
 * Escritura de funciones en notación matemática (MathLive) con detección automática de variables.
 * Selector de operaciones por unidad y tema; las que no aplican a la función escrita se atenúan y explican el motivo.
-* Gráfica en vivo de funciones de 1 o 2 variables, con rango de ejes editable, vista de superficie o curvas de nivel y descarga como PNG.
-* La gráfica marca el punto de evaluación y dibuja la capa de cada operación (plano tangente, flecha del gradiente).
+* Gráfica en vivo de funciones de 1 o 2 variables, con rango editable, vista de superficie o curvas de nivel y descarga como PNG. Valores fuera del dominio real quedan como huecos.
+* La gráfica puede marcar el punto de evaluación y superponer el plano tangente o las direcciones del gradiente y la derivada direccional.
 * Resultado en notación matemática, con botones para copiarlo como LaTeX o texto.
 * Puntos de evaluación con fracciones y constantes (`1/2`, `pi/2`, `sqrt(2)`).
+* Ejemplos, una práctica guiada con pista, historial local del navegador y opción de imprimir o guardar el informe como PDF desde el navegador.
+* Procedimientos simbólicos acotados por operación; no es un tutor universal.
 * Enter para calcular desde cualquier campo.
 * Funciona sin internet una vez descargadas las librerías del navegador (ver [Modo sin internet](#modo-sin-internet)).
 * API REST sencilla y extensible: agregar una operación nueva no requiere tocar las rutas.
@@ -22,22 +24,29 @@ Actualmente el proyecto se encuentra en desarrollo. Consulta el [CHANGELOG](CHAN
 
 | Unidad | Operación | Qué hace |
 | --- | --- | --- |
-| 1 | Límite multivariable | Límite iterado variable por variable en un punto |
+| 1 | Límite multivariable | Límite iterado y comparación de cinco trayectorias en un punto |
+| 1 | Dominio | Recortes reales por variable; las restricciones conjuntas pueden requerir análisis adicional |
 | 1 | Derivada parcial | Respecto a una variable, simbólica o evaluada en un punto |
 | 1 | Derivada de orden superior | Derivadas sucesivas y mixtas (`x, y, x`), simbólicas o evaluadas |
 | 1 | Teorema de Schwarz | Calcula `f_xy` y `f_yx` y verifica si son iguales |
 | 1 | Gradiente | Vector gradiente, simbólico o evaluado en un punto |
+| 1 | Hessiana | Matriz de segundas derivadas, simbólica o evaluada en un punto |
+| 1 | Derivada direccional | Producto del gradiente con la dirección unitaria indicada |
 | 1 | Plano tangente y recta normal | A `z = f(x, y)` en un punto |
+| 1 | Candidatos críticos | Resuelve `∇f = 0` y aplica la prueba Hessiana cuando es concluyente |
+| 1 | Multiplicadores de Lagrange | Busca candidatos sobre una restricción `g = 0` |
 
-> **Nota sobre los límites:** el cálculo itera el límite variable por variable (límite iterado). Esto **no** equivale al límite multivariable riguroso, que exige obtener el mismo valor por cualquier trayectoria. Un límite iterado puede existir aunque el límite doble no exista.
+> **Nota sobre los límites:** el cálculo muestra el límite iterado y compara cinco trayectorias. Si dos trayectorias difieren, el límite no existe; que las cinco coincidan **no demuestra** que exista el límite multivariable.
+
+> **Nota sobre dominio y extremos:** el dominio se analiza variable por variable y puede requerir un análisis conjunto. Los candidatos críticos y de Lagrange no son por sí solos una clasificación de extremos: hay que revisar la clasificación y el dominio de la función.
 
 ### Hoja de ruta
 
-- [x] Límites, derivadas parciales, orden superior, Schwarz, gradiente, plano tangente
-- [ ] Dominio, rango, curvas y superficies de nivel; continuidad
+- [x] Límites, derivadas parciales, orden superior, Schwarz, gradiente, Hessiana y derivada direccional
+- [x] Dominio por variable, candidatos críticos, Lagrange y capas geométricas de gráfica
+- [ ] Rango, curvas y superficies de nivel como operaciones, continuidad
 - [ ] Diferencial total, diferencial exacta y función potencial
 - [ ] Regla de la cadena, derivación implícita y Jacobiano
-- [ ] Derivada direccional, extremos (Hessiano) y multiplicadores de Lagrange
 - [ ] Unidad 2: integrales dobles y triples, áreas, volúmenes, masa y momentos
 - [ ] Unidad 3: funciones vectoriales, campos, divergencia, rotacional, integrales de línea y Green
 
@@ -198,15 +207,21 @@ Y los errores con:
 | Ruta | Parámetros además de la función | Respuesta extra |
 | --- | --- | --- |
 | `POST /api/variables` | — | `variables`, `variables_latex` |
-| `POST /api/limit` | `point` (obligatorio) | — |
+| `POST /api/limit` | `point` (obligatorio) | `trajectories`, `iterated_latex`, `paths_agree` |
+| `POST /api/domain` | — | — |
 | `POST /api/derivative` | `variable` (obligatorio), `point` | — |
 | `POST /api/higher_derivative` | `variables` (lista, en orden), `point` | — |
 | `POST /api/schwarz` | `variables` (exactamente 2) | `equal` |
 | `POST /api/gradient` | `point` | — |
+| `POST /api/hessian` | `point` | — |
+| `POST /api/directional` | `direction` (obligatorio), `point` | — |
 | `POST /api/tangent_plane` | `point` (obligatorio, 2 variables) | — |
-| `POST /api/plot` | `x_range`, `y_range`, `point`, `overlay` (`tangent_plane` o `gradient`) | `type`, `x`, `y`, `z`, `marker`, `plane_z`, `gradient_arrow` |
+| `POST /api/critical` | — | `candidates` |
+| `POST /api/lagrange` | `constraint` (obligatorio) | `candidates` |
+| `POST /api/plot` | `x_range`, `y_range`, `point`, `overlay` (`tangent_plane`, `gradient` o `directional`), `direction` | `type`, `x`, `y`, `z`, `marker`, `plane_z`, `gradient_arrow`, `directional_arrow` |
 
 `point` es un objeto `{ "x": "1", "y": "1/2" }` con un valor por variable.
+`direction` usa el mismo formato y se normaliza a un vector unitario para calcular la derivada direccional.
 
 Ejemplo:
 
@@ -244,7 +259,7 @@ curl -X POST http://127.0.0.1:5000/api/limit \
 # Pruebas
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements.txt -r requirements-dev.txt
 python -m pytest
 ```
 
@@ -262,8 +277,10 @@ multivariable-calc-mat2/
 │   │   ├── registry.py        # registro de operaciones (@register)
 │   │   ├── parser.py          # texto/LaTeX → expresión de SymPy
 │   │   ├── limits.py          # límites
-│   │   ├── derivatives.py     # derivadas, orden superior, Schwarz, gradiente
+│   │   ├── derivatives.py     # derivadas, orden superior, Schwarz, gradiente, Hessiana
 │   │   ├── geometry.py        # plano tangente y recta normal
+│   │   ├── domain.py          # análisis parcial del dominio real
+│   │   ├── extrema.py         # candidatos críticos y de Lagrange
 │   │   └── plotting.py        # datos de gráficas 2D/3D, marcador y capas
 │   ├── static/
 │   │   ├── css/style.css

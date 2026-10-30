@@ -89,6 +89,7 @@ def plot():
             y_range=y_range,
             point=data.get("point"),
             overlay=data.get("overlay"),
+            direction=data.get("direction"),
         )
 
     return handle_api(action, "/api/plot", "No se pudo generar la gráfica.")

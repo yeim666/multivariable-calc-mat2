@@ -17,6 +17,19 @@ TRANSFORMATIONS = standard_transformations + (
 )
 
 
+# constantes que el usuario escribe como letras o simbolos de MathLive.
+# sin esto, "e" y "\pi" entran como variables libres y rompen deteccion,
+# limites, graficas y puntos de evaluacion.
+CONSTANT_NAMES = {
+    "e": sp.E,
+    "E": sp.E,
+    "pi": sp.pi,
+    "Pi": sp.pi,
+    "π": sp.pi,
+    "exponentialE": sp.E,
+}
+
+
 # funciones matematicas permitidas explicitamente en el parser de texto plano.
 # cualquier identificador que NO este aqui, sympy lo trata como variable nueva
 # automaticamente. esto es lo que permite funciones de cualquier nombre de variable.
@@ -37,6 +50,7 @@ ALLOWED_FUNCTIONS = {
     "Abs": sp.Abs,
     "pi": sp.pi,
     "E": sp.E,
+    "e": sp.E,
 }
 
 
@@ -52,17 +66,49 @@ GLOBAL_DICT = {
 }
 
 
+def replace_constants(expr):
+    """Sustituye e, pi y equivalentes de MathLive por las constantes de SymPy."""
+
+    if not hasattr(expr, "free_symbols"):
+        return expr
+
+    replacements = {}
+
+    for symbol in expr.free_symbols:
+        constant = CONSTANT_NAMES.get(str(symbol))
+        if constant is not None:
+            replacements[symbol] = constant
+
+    return expr.subs(replacements) if replacements else expr
+
+
+def is_constant_name(name):
+    return str(name) in CONSTANT_NAMES
+
+
+def _normalize_latex(latex_string):
+    # MathLive a veces escribe el numero e con comandos propios
+    return (
+        latex_string
+        .replace(r"\exponentialE", "e")
+        .replace(r"\mathrm{e}", "e")
+        .replace(r"\operatorname{e}", "e")
+    )
+
+
 # parser de texto plano (ej. "x^2 + y^2", "sqrt(x)+sin(y)").
 # cualquier identificador que el usuario escriba y que no este en
 # ALLOWED_FUNCTIONS se convierte automaticamente en una variable simbolica nueva.
 def parse_expression(expression):
 
-    return parse_expr(
+    expr = parse_expr(
         expression,
         local_dict=ALLOWED_FUNCTIONS,
         global_dict=GLOBAL_DICT,
         transformations=TRANSFORMATIONS,
     )
+
+    return replace_constants(expr)
 
 
 # parser de notacion LaTeX (usado por el math-field de MathLive).
@@ -70,7 +116,8 @@ def parse_expression(expression):
 def latex_to_expr(latex_string):
 
     try:
-        return parse_latex(latex_string)
+        expr = parse_latex(_normalize_latex(latex_string))
+        return replace_constants(expr)
 
     # normalizamos cualquier error interno de parse_latex a ValueError,
     # para que routes.py lo maneje igual que los errores del parser de texto

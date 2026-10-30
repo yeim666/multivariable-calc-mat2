@@ -2,6 +2,7 @@ import numpy as np
 import sympy as sp
 
 from app.mathcore.common import get_variables
+from app.mathcore.derivatives import parse_direction
 from app.mathcore.geometry import tangent_plane_and_normal
 from app.mathcore.parser import parse_value
 
@@ -14,8 +15,9 @@ from app.mathcore.parser import parse_value
 # overlay (opcional) agrega una capa segun la operacion:
 #   "tangent_plane" -> malla del plano tangente en point
 #   "gradient"      -> flecha en la direccion de maximo ascenso en point
+#   "directional"   -> flecha en la direccion unitaria indicada
 def generate_plot_data(expr, x_range=(-10, 10), y_range=(-10, 10),
-                       resolution=60, point=None, overlay=None):
+                       resolution=60, point=None, overlay=None, direction=None):
 
     variables = get_variables(expr)
 
@@ -44,7 +46,9 @@ def generate_plot_data(expr, x_range=(-10, 10), y_range=(-10, 10),
             data["marker"] = marker
 
         if overlay and marker and len(variables) == 2:
-            data.update(_overlay(expr, variables, point, overlay, data, x_range, y_range))
+            data.update(_overlay(
+                expr, variables, point, overlay, data, x_range, y_range, direction,
+            ))
 
     except Exception:
         pass
@@ -52,7 +56,6 @@ def generate_plot_data(expr, x_range=(-10, 10), y_range=(-10, 10),
     return data
 
 
-# valida un rango (minimo, maximo): numeros finitos y minimo < maximo
 def _check_range(value, variable):
 
     try:
@@ -66,17 +69,19 @@ def _check_range(value, variable):
     return (low, high)
 
 
-# lista de numeros -> lista json valida: nan e infinitos pasan a None
-# (json no tiene nan; sin esto el navegador no puede leer la respuesta)
+# lista de numeros -> lista json valida: no reales o infinitos pasan a None
+# (hueco fuera del dominio real). se usa la parte imaginaria para no pintar
+# la parte real de un valor complejo, que no pertenece a la grafica real.
 def _clean(values):
 
-    arr = np.real(np.asarray(values, dtype=complex)).astype(float)
+    arr = np.asarray(values, dtype=complex)
+    real = np.real(arr)
+    imag = np.imag(arr)
+    ok = np.isfinite(real) & (np.abs(imag) <= 1e-10)
 
-    return np.where(np.isfinite(arr), arr, None).tolist()
+    return np.where(ok, real.astype(float), None).tolist()
 
 
-# evalua una funcion lambdificada sobre una malla; si el resultado es
-# un escalar (funcion constante) lo expande a la forma de la malla
 def _eval_grid(f, x_grid, y_grid):
 
     z = f(x_grid, y_grid)
@@ -87,18 +92,11 @@ def _eval_grid(f, x_grid, y_grid):
     return z
 
 
-# caso de una sola variable: linea 2D, y = f(x)
 def _plot_2d(expr, var, x_range, resolution):
 
-    # lambdify convierte la expresion simbolica en una funcion de numpy,
-    # mucho mas rapida que evaluar sympy punto por punto
     f = sp.lambdify(var, expr, modules=["numpy"])
-
     x_vals = np.linspace(x_range[0], x_range[1], resolution)
 
-    # evaluamos en todos los puntos de una vez (vectorizado); los avisos de
-    # numpy por dominios invalidos (log de negativos, division por cero)
-    # se silencian porque esos puntos salen como huecos en la grafica
     with np.errstate(all="ignore"):
         y_vals = f(x_vals)
 
@@ -113,15 +111,12 @@ def _plot_2d(expr, var, x_range, resolution):
     }
 
 
-# caso de dos variables: superficie 3D, z = f(x, y)
 def _plot_3d(expr, var1, var2, x_range, y_range, resolution):
 
     f = sp.lambdify((var1, var2), expr, modules=["numpy"])
 
     x_vals = np.linspace(x_range[0], x_range[1], resolution)
     y_vals = np.linspace(y_range[0], y_range[1], resolution)
-
-    # meshgrid arma la malla 2D de combinaciones (x, y) sobre la que evaluamos
     x_grid, y_grid = np.meshgrid(x_vals, y_vals)
 
     with np.errstate(all="ignore"):
@@ -136,8 +131,6 @@ def _plot_3d(expr, var1, var2, x_range, y_range, resolution):
     }
 
 
-# punto de evaluacion sobre la grafica: (a, f(a)) o (a, b, f(a, b)).
-# devuelve None si faltan variables en el punto o f no es real ahi
 def _marker(expr, variables, point):
 
     if not point:
@@ -151,7 +144,7 @@ def _marker(expr, variables, point):
 
     height = complex(sp.N(expr.subs(dict(zip(variables, values)))))
 
-    if height.imag != 0 or not np.isfinite(height.real):
+    if abs(height.imag) > 1e-10 or not np.isfinite(height.real):
         return None
 
     coords = [float(sp.N(v)) for v in values] + [height.real]
@@ -160,8 +153,27 @@ def _marker(expr, variables, point):
     return dict(zip(keys, coords))
 
 
-# capas extra de la operacion sobre una superficie z = f(x, y)
-def _overlay(expr, variables, point, overlay, data, x_range, y_range):
+def _arrow(a, b, z0, fx, fy, x_range, y_range, key):
+
+    fx, fy = float(fx), float(fy)
+    norm = np.hypot(fx, fy)
+
+    if norm == 0:
+        return {}
+
+    length = 0.2 * max(x_range[1] - x_range[0], y_range[1] - y_range[0])
+    dx, dy = fx / norm * length, fy / norm * length
+
+    return {
+        key: {
+            "x": [a, a + dx],
+            "y": [b, b + dy],
+            "z": [z0, z0 + norm * length],
+        }
+    }
+
+
+def _overlay(expr, variables, point, overlay, data, x_range, y_range, direction):
 
     x, y = variables
     a, b, z0 = (data["marker"][k] for k in ("x", "y", "z"))
@@ -170,7 +182,6 @@ def _overlay(expr, variables, point, overlay, data, x_range, y_range):
 
         _, _, _, plane, _ = tangent_plane_and_normal(expr, point)
         f_plane = sp.lambdify((x, y), plane, modules=["numpy"])
-
         x_grid, y_grid = np.meshgrid(data["x"], data["y"])
 
         return {"plane_z": _clean(_eval_grid(f_plane, x_grid, y_grid))}
@@ -178,25 +189,12 @@ def _overlay(expr, variables, point, overlay, data, x_range, y_range):
     if overlay == "gradient":
 
         _, fx, fy, _, _ = tangent_plane_and_normal(expr, point)
-        fx, fy = float(fx), float(fy)
-        norm = np.hypot(fx, fy)
+        return _arrow(a, b, z0, fx, fy, x_range, y_range, "gradient_arrow")
 
-        # gradiente nulo (punto critico): no hay direccion que mostrar
-        if norm == 0:
-            return {}
+    if overlay == "directional":
 
-        # la flecha apunta en la direccion de maximo ascenso sobre la
-        # superficie: se avanza una longitud L en (fx, fy)/norma y la altura
-        # sube norma * L, porque la derivada direccional maxima es |grad f|
-        length = 0.2 * max(x_range[1] - x_range[0], y_range[1] - y_range[0])
-        dx, dy = fx / norm * length, fy / norm * length
-
-        return {
-            "gradient_arrow": {
-                "x": [a, a + dx],
-                "y": [b, b + dy],
-                "z": [z0, z0 + norm * length],
-            }
-        }
+        vector = parse_direction(variables, direction)
+        unit = vector / vector.norm()
+        return _arrow(a, b, z0, float(unit[0]), float(unit[1]), x_range, y_range, "directional_arrow")
 
     return {}

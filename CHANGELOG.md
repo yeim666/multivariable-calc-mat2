@@ -5,6 +5,44 @@ Todos los cambios importantes del proyecto se documentan en este archivo.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el
 proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
+## [Unreleased]
+
+### Añadido
+
+- Procedimientos simbólicos por operación para límites, derivadas, gradiente, Hessiana,
+  derivada direccional, geometría y candidatos críticos o de Lagrange. La interfaz aclara
+  que no es un tutor universal.
+- Comparación de cinco trayectorias para límites de dos o más variables, junto con el límite
+  iterado. Se advierte que coincidir en esas trayectorias no demuestra la existencia del
+  límite multivariable.
+- Análisis real del dominio por variable, con advertencia de que restricciones conjuntas
+  pueden requerir análisis adicional.
+- Clasificación Hessiana cuando es concluyente para candidatos críticos y advertencias para
+  revisar el dominio y clasificar los candidatos de extremos.
+- Marcador de evaluación y capas de plano tangente, gradiente o dirección en las gráficas;
+  valores no reales o fuera del dominio quedan como huecos.
+- Ejemplos, una práctica guiada con pista, historial limitado al almacenamiento local del
+  navegador y presentación para imprimir o guardar como PDF desde el navegador.
+
+### Cambiado
+
+- La tabla de operaciones, la hoja de ruta, la API y la estructura del README describen las
+  capacidades actuales.
+- Los símbolos `e` y `pi` se reconocen como constantes en expresiones y puntos de evaluación,
+  y no se cuentan como variables.
+
+### Corregido
+
+- Las familias de puntos críticos con variables libres ya no provocan un error al formatear
+  candidatos; se identifican como pendientes de clasificación.
+- Las soluciones de Lagrange sin multiplicador determinado ya no generan una expresión vacía
+  en el resultado.
+
+### Eliminado
+
+- Copias antiguas y no utilizadas de código, recursos y pruebas que estaban anidadas en
+  `app/templates/` y `tests/`, además del test vacío `tests/test_calculator.py`.
+
 ## [0.2.0] - 2026-10-25
 
 Primera entrega de la Unidad 1 (cálculo diferencial) y rediseño completo de la interfaz.

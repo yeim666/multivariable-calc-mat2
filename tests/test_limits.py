@@ -35,3 +35,10 @@ def test_invalid_point_value():
     expr = parse_expression("x")
     with pytest.raises(ValueError):
         multivariable_limit(expr, {"x": "y"})
+
+
+# el punto acepta e y pi como constantes
+def test_point_accepts_e_and_pi():
+    expr = parse_expression("x")
+    assert multivariable_limit(expr, {"x": "pi"}) == sp.pi
+    assert multivariable_limit(expr, {"x": "e"}) == sp.E

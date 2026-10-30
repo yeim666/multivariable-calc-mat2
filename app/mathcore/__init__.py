@@ -5,4 +5,4 @@ from app.mathcore.registry import run, OPERATIONS
 
 # importar cada modulo de operaciones ejecuta sus decoradores @register,
 # que es lo que llena el diccionario OPERATIONS
-from app.mathcore import limits, derivatives, geometry  # noqa: F401
+from app.mathcore import limits, derivatives, geometry, domain, extrema  # noqa: F401

@@ -77,6 +77,47 @@ def test_plot_domain_holes_are_valid_json(client):
     assert any(v is None for row in data["z"] for v in row)
 
 
+# e y pi no se detectan como variables
+def test_constants_are_not_variables(client):
+    res = client.post("/api/variables", json={"latex": r"e^{x}+\pi y"})
+    data = res.get_json()
+    assert data["success"] is True
+    assert data["variables"] == ["x", "y"]
+
+
+def test_domain_endpoint(client):
+    res = client.post("/api/domain", json={"expression": "sqrt(x)+log(y)"})
+    assert res.get_json()["success"] is True
+
+
+def test_hessian_endpoint(client):
+    res = client.post("/api/hessian", json={"expression": "x^2 + y^2"})
+    data = res.get_json()
+    assert data["success"] is True
+    assert any(step.get("title_latex") == "f_{xx}" for step in data["procedure"])
+
+
+def test_directional_endpoint(client):
+    res = client.post("/api/directional", json={
+        "expression": "x^2 + y^2",
+        "direction": {"x": "1", "y": "0"},
+        "point": {"x": "1", "y": "0"},
+    })
+    data = res.get_json()
+    assert data["success"] is True
+    assert data["result"] == "2"
+
+
+def test_critical_endpoint(client):
+    res = client.post("/api/critical", json={"expression": "x^2 + y^2"})
+    assert res.get_json()["success"] is True
+
+
+def test_lagrange_endpoint(client):
+    res = client.post("/api/lagrange", json={"expression": "x*y", "constraint": "x+y-1"})
+    assert res.get_json()["success"] is True
+
+
 # el punto de evaluacion llega como marcador sobre la superficie
 def test_plot_marker(client):
     res = client.post("/api/plot", json={"expression": "x^2 + y^2", "point": {"x": "1", "y": "1/2"}})
