@@ -1,6 +1,5 @@
-# NekoCalc — Calculadora Multivariable
-
-Aplicación web desarrollada con **Flask** y **SymPy** para trabajar con funciones de varias variables: límites, derivadas parciales, gradiente, plano tangente y más, con gráficas 2D/3D interactivas.
+# NekoCalc — Calculadora Multivariable  
+Aplicación web desarrollada con **Flask** y **SymPy** para trabajar con funciones de varias variables: cálculo diferencial e integral, análisis vectorial y gráficas 2D/3D interactivas.
 
 El proyecto nace como Proyecto Integrador de Matemática II (cálculo diferencial, integral y vectorial de funciones multivariables) y está pensado para crecer unidad por unidad.
 
@@ -10,6 +9,7 @@ Actualmente el proyecto se encuentra en desarrollo. Consulta el [CHANGELOG](CHAN
 
 * Escritura de funciones en notación matemática (MathLive) con detección automática de variables.
 * Selector de operaciones por unidad y tema; las que no aplican a la función escrita se atenúan y explican el motivo.
+* Operaciones agrupadas por tema en secciones desplegables y panel de controles con scroll vertical único.
 * Gráfica en vivo de funciones de 1 o 2 variables, con rango editable, vista de superficie o curvas de nivel y descarga como PNG. Valores fuera del dominio real quedan como huecos.
 * La gráfica puede marcar el punto de evaluación y superponer el plano tangente o las direcciones del gradiente y la derivada direccional.
 * Resultado en notación matemática, con botones para copiarlo como LaTeX o texto.
@@ -35,6 +35,16 @@ Actualmente el proyecto se encuentra en desarrollo. Consulta el [CHANGELOG](CHAN
 | 1 | Plano tangente y recta normal | A `z = f(x, y)` en un punto |
 | 1 | Candidatos críticos | Resuelve `∇f = 0` y aplica la prueba Hessiana cuando es concluyente |
 | 1 | Multiplicadores de Lagrange | Busca candidatos sobre una restricción `g = 0` |
+| 2 | Integral doble cartesiana | Integral iterada en una región con límites cartesianos |
+| 2 | Integral doble polar | Sustitución polar y jacobiano `r` |
+| 2 | Integral triple cartesiana | Integral iterada en una región con límites cartesianos |
+| 2 | Integrales triples cilíndrica y esférica | Sustituciones y jacobianos `r` y `ρ² sin(φ)` |
+| 2 | Área de superficie | Área de una gráfica `z = f(x, y)` sobre una región definida por límites cartesianos |
+| 2 | Masa, centro de masa y momentos | Propiedades de una lámina con densidad variable sobre una región definida por límites cartesianos |
+| 3 | Funciones vectoriales | Límite, derivada e integral de curvas parametrizadas en 2D o 3D |
+| 3 | Campos vectoriales | Divergencia, rotacional, Laplaciano y análisis de potencial conservativo |
+| 3 | Integrales de línea | Integrales de primer tipo `f ds` y segundo tipo `P dx + Q dy` sobre curvas planas parametrizadas |
+| 3 | Teorema de Green | Circulación mediante una integral doble de `Q_x - P_y` en una región con límites cartesianos iterados |
 
 > **Nota sobre los límites:** el cálculo muestra el límite iterado y compara cinco trayectorias. Si dos trayectorias difieren, el límite no existe; que las cinco coincidan **no demuestra** que exista el límite multivariable.
 
@@ -47,8 +57,9 @@ Actualmente el proyecto se encuentra en desarrollo. Consulta el [CHANGELOG](CHAN
 - [ ] Rango, curvas y superficies de nivel como operaciones, continuidad
 - [ ] Diferencial total, diferencial exacta y función potencial
 - [ ] Regla de la cadena, derivación implícita y Jacobiano
-- [ ] Unidad 2: integrales dobles y triples, áreas, volúmenes, masa y momentos
-- [ ] Unidad 3: funciones vectoriales, campos, divergencia, rotacional, integrales de línea y Green
+- [x] Unidad 2: integrales dobles y triples, coordenadas polares/cilíndricas/esféricas, área de superficies, volumen por integración y propiedades de láminas
+- [x] Unidad 3: funciones vectoriales, campos, operadores diferenciales, integrales de línea planas y Green para regiones con límites cartesianos iterados
+- [ ] Generalizar Green a regiones no rectangulares y las integrales de línea a curvas espaciales
 
 ---
 
@@ -169,11 +180,13 @@ Las fuentes de Google siguen cargándose en línea; sin conexión se usan las fu
 
 # Cómo usar la calculadora
 
-1. Escribe una función en el campo **Función**, por ejemplo `x^2 + y^2`. Las variables se detectan solas y la gráfica se dibuja en vivo.
+1. Escribe una función o integrando en el campo **Función**, por ejemplo `x^2 + y^2`. Las variables se detectan solas y la gráfica se dibuja en vivo. Las operaciones de campos vectoriales y funciones vectoriales reciben sus componentes en los campos específicos y no requieren una función escalar.
 2. Elige una **operación** en el panel (por unidad y tema).
 3. Completa los campos que pide: un punto, la variable a derivar, el orden de derivación, etc. Los puntos aceptan fracciones como `1/2` o constantes como `pi`.
 4. Pulsa **Calcular** (o presiona Enter).
 5. El resultado aparece en el panel, con botones para copiarlo. La gráfica marca el punto y dibuja la capa de la operación.
+
+En las integrales múltiples, los límites se introducen en el orden mostrado por la operación. Las funciones de integrales polares, cilíndricas y esféricas se escriben originalmente en coordenadas cartesianas; el motor aplica la sustitución correspondiente y su jacobiano. Para calcular el volumen de una región, integra la función constante `1`.
 
 Ejemplo:
 
@@ -218,10 +231,28 @@ Y los errores con:
 | `POST /api/tangent_plane` | `point` (obligatorio, 2 variables) | — |
 | `POST /api/critical` | — | `candidates` |
 | `POST /api/lagrange` | `constraint` (obligatorio) | `candidates` |
+| `POST /api/double_integral` | `bounds`: límites de `x`, `y` | `coordinate_system`, procedimiento |
+| `POST /api/double_polar` | `bounds`: límites de `r`, `theta` | `coordinate_system`, procedimiento |
+| `POST /api/triple_integral` | `bounds`: límites de `x`, `y`, `z` | `coordinate_system`, procedimiento |
+| `POST /api/triple_cylindrical` | `bounds`: límites de `r`, `theta`, `z` | `coordinate_system`, procedimiento |
+| `POST /api/triple_spherical` | `bounds`: límites de `rho`, `phi`, `theta` | `coordinate_system`, procedimiento |
+| `POST /api/surface_area` | función `f(x,y)`, `bounds` de `x`, `y` | área y procedimiento |
+| `POST /api/mass_properties` | densidad `f(x,y)`, `bounds` de `x`, `y` | masa, centro de masa, momentos |
+| `POST /api/divergence` | `components`: lista de 2 o 3 componentes | divergencia y procedimiento |
+| `POST /api/curl` | `components`: lista de 2 o 3 componentes | rotacional y procedimiento |
+| `POST /api/laplacian` | función escalar | Laplaciano y procedimiento |
+| `POST /api/conservative` | `components`: `[P, Q]` | indicador conservativo, potencial |
+| `POST /api/vector_curve` | `components`, `mode`, `parameter`, `lower` (para integral) | vector resultado |
+| `POST /api/line_integral` | `kind`, `x_curve`, `y_curve`, `lower`, `upper`; `components` para segundo tipo | integral y procedimiento |
+| `POST /api/green` | `components`: `[P, Q]`, `bounds` cartesianos iterados | circulación y procedimiento |
 | `POST /api/plot` | `x_range`, `y_range`, `point`, `overlay` (`tangent_plane`, `gradient` o `directional`), `direction` | `type`, `x`, `y`, `z`, `marker`, `plane_z`, `gradient_arrow`, `directional_arrow` |
 
 `point` es un objeto `{ "x": "1", "y": "1/2" }` con un valor por variable.
 `direction` usa el mismo formato y se normaliza a un vector unitario para calcular la derivada direccional.
+
+`bounds` es una lista ordenada de objetos `{ "lower": "...", "upper": "..." }`, uno por variable de integración, en el orden mostrado por la operación. Los límites interiores pueden depender de variables exteriores. En coordenadas cilíndricas y esféricas la función enviada sigue expresada en `x`, `y`, `z`; el motor realiza el cambio de variables. La convención es `x = r cos(theta)`, `y = r sin(theta)`, `z = z` para cilíndricas, y `x = rho sin(phi) cos(theta)`, `y = rho sin(phi) sin(theta)`, `z = rho cos(phi)` para esféricas.
+
+Las integrales de línea actuales usan curvas planas parametrizadas `x(t), y(t)`; el primer tipo integra el campo escalar enviado por `expression` contra `ds`, y el segundo tipo usa `components: [P, Q]` para integrar `P dx + Q dy`. Green recibe una región descrita por límites cartesianos iterados; no recibe una parametrización explícita del borde. Las propiedades de masa consideran láminas 2D con densidad escalar. El análisis de campos conservativos se limita a campos planos y su conclusión sobre independencia de trayectoria requiere un dominio simplemente conexo.
 
 Ejemplo:
 
@@ -229,6 +260,22 @@ Ejemplo:
 curl -X POST http://127.0.0.1:5000/api/limit \
   -H "Content-Type: application/json" \
   -d '{"expression": "x^2 + y^2", "point": {"x": "1", "y": "2"}}'
+```
+
+Integral doble polar de `x² + y²` sobre el disco unitario:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/double_polar \
+  -H "Content-Type: application/json" \
+  -d '{"expression":"x^2+y^2","bounds":[{"lower":"0","upper":"1"},{"lower":"0","upper":"2*pi"}]}'
+```
+
+Divergencia del campo `F = (x, y)`:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/divergence \
+  -H "Content-Type: application/json" \
+  -d '{"components":["x","y"]}'
 ```
 
 ---
@@ -250,7 +297,7 @@ curl -X POST http://127.0.0.1:5000/api/limit \
 
    Si creas un módulo nuevo, impórtalo en `app/mathcore/__init__.py` para que el decorador se ejecute. La ruta `/api/mi_operacion` queda disponible sin tocar `routes.py`.
 
-2. **Frontend.** Agrega una entrada en `app/static/js/operations.js` con su unidad, grupo, endpoint y campos (`point`, `variable`, `variableList` o `variablePair`). Opcionalmente `requires` (cantidad de variables), `overlay` (capa en la gráfica) y `note` (texto bajo el resultado).
+2. **Frontend.** Agrega una entrada en `app/static/js/operations.js` con su unidad, grupo, endpoint y campos (`point`, `variable`, `variableList`, `variablePair`, `bounds`, `expressionList`, `curve`, `select`, `scalar` o `math`). Opcionalmente `requires` (cantidad de variables), `overlay` (capa en la gráfica) y `note` (texto bajo el resultado).
 
 3. **Pruebas.** Agrega tests en `tests/`.
 
@@ -281,6 +328,8 @@ multivariable-calc-mat2/
 │   │   ├── geometry.py        # plano tangente y recta normal
 │   │   ├── domain.py          # análisis parcial del dominio real
 │   │   ├── extrema.py         # candidatos críticos y de Lagrange
+│   │   ├── integrals.py       # integrales múltiples, de línea y aplicaciones
+│   │   ├── vector_fields.py   # funciones vectoriales y operadores de campos
 │   │   └── plotting.py        # datos de gráficas 2D/3D, marcador y capas
 │   ├── static/
 │   │   ├── css/style.css

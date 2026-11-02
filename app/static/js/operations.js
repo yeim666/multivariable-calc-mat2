@@ -170,6 +170,152 @@ const OPERATIONS = {
         note: () => "Los candidatos de extremos requieren clasificación y revisión del dominio.",
     },
 
+    double_integral: {
+        label: "Integral doble cartesiana",
+        unit: "Unidad 2",
+        group: "Integrales dobles",
+        endpoint: "/api/double_integral",
+        allowConstant: true,
+        requires: { min: 2, max: 2, message: "La integral doble requiere una función de 2 variables." },
+        fields: [{ type: "bounds", title: "Límites de integración", variables: ["x", "y"] }],
+    },
+
+    surface_area: {
+        label: "Área de superficie z = f(x,y)",
+        unit: "Unidad 2",
+        group: "Aplicaciones geométricas",
+        endpoint: "/api/surface_area",
+        allowConstant: true,
+        requires: { min: 2, max: 2, message: "El área de superficie requiere una función de 2 variables." },
+        fields: [{ type: "bounds", title: "Región de integración (x, y)", variables: ["x", "y"] }],
+    },
+
+    mass_properties: {
+        label: "Masa, centro y momentos",
+        unit: "Unidad 2",
+        group: "Aplicaciones físicas",
+        endpoint: "/api/mass_properties",
+        allowConstant: true,
+        requires: { min: 2, max: 2, message: "Las propiedades de una lámina requieren una densidad de 2 variables." },
+        fields: [{ type: "bounds", title: "Región de integración (x, y)", variables: ["x", "y"] }],
+    },
+
+    double_polar: {
+        label: "Integral doble polar",
+        unit: "Unidad 2",
+        group: "Integrales dobles",
+        endpoint: "/api/double_polar",
+        allowConstant: true,
+        requires: { min: 2, max: 2, message: "La integral polar requiere una función de 2 variables x, y." },
+        fields: [{ type: "bounds", title: "Límites en orden r, θ", variables: ["r", "theta"] }],
+    },
+
+    triple_integral: {
+        label: "Integral triple cartesiana",
+        unit: "Unidad 2",
+        group: "Integrales triples",
+        endpoint: "/api/triple_integral",
+        allowConstant: true,
+        requires: { min: 3, max: 3, message: "La integral triple requiere una función de 3 variables." },
+        fields: [{ type: "bounds", title: "Límites de integración", variables: ["x", "y", "z"] }],
+    },
+
+    triple_cylindrical: {
+        label: "Integral triple cilíndrica",
+        unit: "Unidad 2",
+        group: "Integrales triples",
+        endpoint: "/api/triple_cylindrical",
+        allowConstant: true,
+        requires: { min: 3, max: 3, message: "La integral cilíndrica requiere una función de 3 variables x, y, z." },
+        fields: [{ type: "bounds", title: "Límites en orden r, θ, z", variables: ["r", "theta", "z"] }],
+    },
+
+    triple_spherical: {
+        label: "Integral triple esférica",
+        unit: "Unidad 2",
+        group: "Integrales triples",
+        endpoint: "/api/triple_spherical",
+        allowConstant: true,
+        requires: { min: 3, max: 3, message: "La integral esférica requiere una función de 3 variables x, y, z." },
+        fields: [{ type: "bounds", title: "Límites en orden ρ, φ, θ", variables: ["rho", "phi", "theta"] }],
+    },
+
+    divergence: {
+        label: "Divergencia",
+        unit: "Unidad 3",
+        group: "Campos vectoriales",
+        endpoint: "/api/divergence",
+        noFunction: true,
+        fields: [{ type: "expressionList", key: "components", title: "Componentes del campo F", count: 2, dynamicDimension: true }],
+    },
+
+    curl: {
+        label: "Rotacional (plano o espacio)",
+        unit: "Unidad 3",
+        group: "Campos vectoriales",
+        endpoint: "/api/curl",
+        noFunction: true,
+        fields: [{ type: "expressionList", key: "components", title: "Componentes del campo F", count: 2, dynamicDimension: true }],
+    },
+
+    laplacian: {
+        label: "Laplaciano",
+        unit: "Unidad 3",
+        group: "Campos escalares",
+        endpoint: "/api/laplacian",
+        fields: [],
+    },
+
+    conservative: {
+        label: "Campo conservativo y potencial",
+        unit: "Unidad 3",
+        group: "Campos vectoriales",
+        endpoint: "/api/conservative",
+        noFunction: true,
+        fields: [{ type: "expressionList", key: "components", title: "Componentes P, Q", count: 2 }],
+        note: (data) => data.note || "",
+    },
+
+    line_integral: {
+        label: "Integral de línea parametrizada",
+        unit: "Unidad 3",
+        group: "Integrales curvilíneas",
+        endpoint: "/api/line_integral",
+        noFunction: true,
+        allowConstant: true,
+        fields: [
+            { type: "select", key: "kind", title: "Tipo de integral", options: [["second", "Segundo tipo: P dx + Q dy"], ["first", "Primer tipo: f ds"]] },
+            { type: "expressionList", key: "components", title: "Componentes P, Q", count: 2, visibleWhen: { key: "kind", value: "second" } },
+            { type: "curve", title: "Curva y límites del parámetro" },
+        ],
+    },
+
+    green: {
+        label: "Teorema de Green",
+        unit: "Unidad 3",
+        group: "Teorema de Green",
+        endpoint: "/api/green",
+        noFunction: true,
+        fields: [
+            { type: "expressionList", key: "components", title: "Componentes P, Q", count: 2 },
+            { type: "greenBounds", title: "Límites de la región" },
+        ],
+    },
+
+    vector_curve: {
+        label: "Función vectorial: límite, derivada o integral",
+        unit: "Unidad 3",
+        group: "Funciones vectoriales",
+        endpoint: "/api/vector_curve",
+        noFunction: true,
+        fields: [
+            { type: "select", key: "mode", title: "Operación", options: [["limit", "Límite"], ["derivative", "Derivada"], ["integral", "Integral"]] },
+            { type: "expressionList", key: "components", title: "Componentes r(t)", count: 2, dynamicDimension: true },
+            { type: "scalar", key: "parameter", title: "Valor del parámetro" },
+            { type: "scalar", key: "lower", title: "Límite inferior de integración" },
+        ],
+    },
+
 };
 
 

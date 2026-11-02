@@ -23,11 +23,21 @@ proyecto usa [versionado semántico](https://semver.org/lang/es/).
   valores no reales o fuera del dominio quedan como huecos.
 - Ejemplos, una práctica guiada con pista, historial limitado al almacenamiento local del
   navegador y presentación para imprimir o guardar como PDF desde el navegador.
+- Integrales dobles cartesianas y polares, e integrales triples cartesianas, cilíndricas y
+  esféricas con sus jacobianos.
+- Aplicaciones de integrales dobles: área de superficies gráficas y propiedades de láminas
+  planas (masa, centro de masa y momentos de inercia).
+- Análisis vectorial: límites, derivadas e integrales de curvas vectoriales en 2D/3D;
+  divergencia, rotacional, Laplaciano, campos conservativos, integrales de línea y Green.
+- Selector de operaciones agrupado en acordeones, controles de integración alineados y mejoras
+  de contraste, toolbar y scroll responsive.
 
 ### Cambiado
 
 - La tabla de operaciones, la hoja de ruta, la API y la estructura del README describen las
   capacidades actuales.
+- Las integrales curvilíneas se parametrizan en el plano, Green usa límites cartesianos
+  iterados y el cálculo de masa y momentos corresponde a láminas 2D.
 - Los símbolos `e` y `pi` se reconocen como constantes en expresiones y puntos de evaluación,
   y no se cuentan como variables.
 

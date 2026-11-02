@@ -135,13 +135,13 @@ function renderChips() {
 
         if (!groups[op.group]) {
 
-            const wrapper = document.createElement("div");
+            const wrapper = document.createElement("details");
             wrapper.className = "chip-group";
+            wrapper.open = Object.keys(OPERATIONS).some((name) => OPERATIONS[name].group === op.group && name === currentOperation);
 
-            const title = document.createElement("p");
+            const title = document.createElement("summary");
             title.className = "chip-group-title";
             title.textContent = op.group;
-
             const chips = document.createElement("div");
             chips.className = "chips";
 
@@ -184,6 +184,9 @@ function refreshChips() {
             chip.title = message;
         } else {
             chip.removeAttribute("title");
+        }
+        if (chip.dataset.op === currentOperation) {
+            chip.closest(".chip-group")?.setAttribute("open", "");
         }
     });
 }
@@ -578,6 +581,202 @@ const FIELD_TYPES = {
         },
     },
 
+    bounds: {
+        render(field, container) {
+            const grid = document.createElement("div");
+            grid.className = "bounds-grid";
+            field.variables.forEach((variable, index) => {
+                const row = document.createElement("div");
+                row.className = "bound-row";
+                const label = document.createElement("strong");
+                label.textContent = variable;
+                row.appendChild(label);
+                ["lower", "upper"].forEach((side) => {
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.id = `bound-${index}-${side}`;
+                    input.dataset.side = side;
+                    input.placeholder = side === "lower" ? "inferior" : "superior";
+                    input.autocomplete = "off";
+                    row.appendChild(input);
+                });
+                grid.appendChild(row);
+            });
+            container.appendChild(grid);
+        },
+        read(field, container) {
+            const bounds = field.variables.map((variable, index) => ({
+                variable,
+                lower: container.querySelector(`#bound-${index}-lower`).value.trim(),
+                upper: container.querySelector(`#bound-${index}-upper`).value.trim(),
+            }));
+            if (bounds.some((bound) => !bound.lower || !bound.upper)) {
+                return { error: "Completa todos los límites de integración." };
+            }
+            return { payload: { bounds } };
+        },
+    },
+
+    expressionList: {
+        render(field, container) {
+            let dimension;
+            if (field.dynamicDimension) {
+                // El selector queda fuera de la rejilla para reservarla a las componentes.
+                dimension = document.createElement("select");
+                dimension.id = `component-dimension-${field.key}`;
+                dimension.setAttribute("aria-label", "Dimensión del campo");
+                dimension.innerHTML = '<option value="2">Campo 2D</option><option value="3">Campo 3D</option>';
+                container.appendChild(dimension);
+            }
+
+            const grid = document.createElement("div");
+            grid.className = "component-grid";
+            const labels = field.count === 2 ? ["P", "Q"] : ["P", "Q", "R"];
+            if (field.dynamicDimension) {
+                const renderComponents = () => {
+                    // Al cambiar entre 2D y 3D se reconstruye la lista de entradas.
+                    grid.replaceChildren();
+                    const count = Number(dimension.value);
+                    ["P", "Q", "R"].slice(0, count).forEach((name, index) => {
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        input.id = `component-${field.key}-${index}`;
+                        input.setAttribute("aria-label", `Componente ${name}`);
+                        input.placeholder = name;
+                        grid.appendChild(input);
+                    });
+                };
+                dimension.addEventListener("change", renderComponents);
+                renderComponents();
+            } else labels.forEach((label, index) => {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.id = `component-${field.key}-${index}`;
+                input.dataset.index = index;
+                input.setAttribute("aria-label", `Componente ${label}`);
+                input.placeholder = label;
+                input.autocomplete = "off";
+                grid.appendChild(input);
+            });
+            container.appendChild(grid);
+        },
+        read(field, container) {
+            const components = [...container.querySelectorAll(".component-grid input")].map((input) => input.value.trim());
+            if (!field.optional && components.some((value) => !value)) {
+                return { error: "Completa todas las componentes del campo." };
+            }
+            const payload = components.every(Boolean) ? { [field.key]: components } : {};
+            return { payload };
+        },
+    },
+
+    greenBounds: {
+        render(field, container) {
+            const order = document.createElement("select");
+            order.id = "green-integration-order";
+            order.setAttribute("aria-label", "Orden de integración");
+            order.innerHTML = '<option value="dxdy">dx dy (x interior)</option><option value="dydx">dy dx (y interior)</option>';
+            container.appendChild(order);
+
+            const grid = document.createElement("div");
+            grid.className = "bounds-grid";
+            const renderBounds = () => {
+                // La primera fila siempre corresponde a la variable interior.
+                const variables = order.value === "dxdy" ? ["x", "y"] : ["y", "x"];
+                grid.replaceChildren();
+                variables.forEach((variable, index) => {
+                    const row = document.createElement("div");
+                    row.className = "bound-row";
+                    const label = document.createElement("strong");
+                    label.textContent = variable;
+                    row.appendChild(label);
+                    ["lower", "upper"].forEach((side) => {
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        input.id = `green-bound-${index}-${side}`;
+                        input.placeholder = side === "lower" ? "inferior" : "superior";
+                        input.setAttribute("aria-label", `${variable}, límite ${side === "lower" ? "inferior" : "superior"}`);
+                        row.appendChild(input);
+                    });
+                    grid.appendChild(row);
+                });
+            };
+            order.addEventListener("change", renderBounds);
+            renderBounds();
+            container.appendChild(grid);
+        },
+        read(field, container) {
+            const bounds = [0, 1].map((index) => ({
+                lower: container.querySelector(`#green-bound-${index}-lower`).value.trim(),
+                upper: container.querySelector(`#green-bound-${index}-upper`).value.trim(),
+            }));
+            if (bounds.some((bound) => !bound.lower || !bound.upper)) {
+                return { error: "Completa todos los límites de la región." };
+            }
+            return { payload: { integration_order: container.querySelector("#green-integration-order").value, bounds } };
+        },
+    },
+
+    curve: {
+        render(field, container) {
+            const grid = document.createElement("div");
+            grid.className = "component-grid";
+            [["x_curve", "x(t)"], ["y_curve", "y(t)"], ["lower", "t inicial"], ["upper", "t final"]].forEach(([key, label]) => {
+                const input = document.createElement("input");
+                input.id = `curve-${key}`;
+                input.dataset.key = key;
+                input.setAttribute("aria-label", label);
+                input.placeholder = label;
+                grid.appendChild(input);
+            });
+            container.appendChild(grid);
+        },
+        read(field, container) {
+            const payload = {};
+            container.querySelectorAll("input").forEach((input) => { payload[input.dataset.key] = input.value.trim(); });
+            if (Object.values(payload).some((value) => !value)) return { error: "Completa la parametrización y los límites de t." };
+            return { payload };
+        },
+    },
+
+    select: {
+        render(field, container) {
+            const select = document.createElement("select");
+            select.id = `field-${field.key}`;
+            field.options.forEach(([value, label]) => {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = label;
+                select.appendChild(option);
+            });
+            if (field.key === "kind") {
+                select.addEventListener("change", () => {
+                    clearResult();
+                    renderFields();
+                });
+            }
+            container.appendChild(select);
+        },
+        read(field, container) {
+            return { payload: { [field.key]: container.querySelector("select").value } };
+        },
+    },
+
+    scalar: {
+        render(field, container) {
+            const input = document.createElement("input");
+            input.id = `field-${field.key}`;
+            input.type = "text";
+            input.placeholder = "0";
+            input.autocomplete = "off";
+            container.appendChild(input);
+        },
+        read(field, container) {
+            const value = container.querySelector("input").value.trim();
+            return { payload: value ? { [field.key]: value } : {} };
+        },
+    },
+
 };
 
 
@@ -585,6 +784,20 @@ const FIELD_TYPES = {
 // redibujado y nunca se borra, asi un valor sobrevive aunque pasemos por una
 // operacion que no tiene ese campo (ej. punto -> schwarz -> plano tangente)
 const fieldMemory = {};
+
+
+function isFieldVisible(field, operation) {
+    if (!field.visibleWhen) return true;
+
+    const selectorId = `field-${field.visibleWhen.key}`;
+    const selectorField = operation.fields.find((candidate) => candidate.key === field.visibleWhen.key);
+    // Durante un redibujado el selector aun no existe; se usa su valor guardado o inicial.
+    const selectedValue = document.getElementById(selectorId)?.value
+        ?? fieldMemory[selectorId]
+        ?? selectorField?.options?.[0]?.[0];
+
+    return selectedValue === field.visibleWhen.value;
+}
 
 
 // lee los valores actuales de los campos visibles, por id
@@ -656,7 +869,7 @@ function renderFields() {
     blockedByRequirement = Boolean(requirementMessage);
     refreshCalculateButton();
 
-    if (currentVariables.length === 0) {
+    if (currentVariables.length === 0 && !op.noFunction && !op.allowConstant) {
         operationFields.innerHTML =
             '<p class="empty-hint">Escribe una función para continuar.</p>';
         return;
@@ -670,7 +883,9 @@ function renderFields() {
         return;
     }
 
-    op.fields.forEach((field, index) => {
+    const visibleFields = op.fields.filter((field) => isFieldVisible(field, op));
+
+    visibleFields.forEach((field, index) => {
 
         const block = document.createElement("section");
         block.className = "field-block";
@@ -704,10 +919,11 @@ function collectPayload(op) {
 
     const payload = {};
     const blocks = operationFields.querySelectorAll(".field-block");
+    const visibleFields = op.fields.filter((field) => isFieldVisible(field, op));
 
-    for (let i = 0; i < op.fields.length; i++) {
+    for (let i = 0; i < visibleFields.length; i++) {
 
-        const field = op.fields[i];
+        const field = visibleFields[i];
         const result = FIELD_TYPES[field.type].read(field, blocks[i]);
 
         if (result.error) {
@@ -939,6 +1155,13 @@ function calculateOnEnter(event) {
     }
 }
 
+
+function operationRequiresExpression(op) {
+    if (!op.noFunction) return true;
+    return op.endpoint === "/api/line_integral"
+        && document.getElementById("field-kind")?.value === "first";
+}
+
 functionInput.addEventListener("keydown", calculateOnEnter);
 
 operationFields.addEventListener("keydown", (event) => {
@@ -961,12 +1184,12 @@ calculateButton.addEventListener("click", async () => {
     const latex = functionInput.getValue("latex").trim();
     const op = OPERATIONS[currentOperation];
 
-    if (!latex) {
+    if (!latex && operationRequiresExpression(op)) {
         showResult({ success: false, error: "Escribe una función." });
         return;
     }
 
-    if (currentVariables.length === 0) {
+    if (currentVariables.length === 0 && !op.noFunction && !op.allowConstant) {
         showResult({ success: false, error: "No se detectaron variables válidas. Revisa la función." });
         return;
     }
@@ -988,7 +1211,7 @@ calculateButton.addEventListener("click", async () => {
         const response = await fetch(op.endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ latex, ...collected.payload })
+            body: JSON.stringify({ ...(latex ? { latex } : {}), ...collected.payload })
         });
 
         const data = await response.json();

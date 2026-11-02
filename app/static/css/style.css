@@ -14,7 +14,7 @@
     --sakura: #e48aae;       /* acento primario: botones, foco, "Nyan" del logo */
     --highlight: #c9718b;    /* acento secundario: borde del resultado */
     --cocoa: #3e2a2e;        /* texto principal, "delbrot" del logo */
-    --cocoa-muted: #8c7377;  /* texto secundario */
+    --cocoa-muted: #665257;  /* texto secundario con contraste legible */
     --error: #b3475b;        /* mensajes de error */
     --on-accent: #ffffff;
     --backdrop: rgba(62, 42, 46, 0.35);
@@ -158,7 +158,9 @@ select {
     border-right: 1px solid var(--blush);
     background: var(--panel);
 
+    min-height: 0;
     overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 
@@ -177,9 +179,7 @@ select {
 
     min-height: 0;
 
-    /* si la ventana es baja, el lienzo se desplaza por dentro
-       para poder llegar al resultado */
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 
@@ -198,6 +198,7 @@ select {
     border-radius: var(--radius);
 
     background: var(--panel);
+    box-shadow: 0 8px 24px rgba(62, 42, 46, 0.08);
 
     overflow: hidden;
 }
@@ -303,6 +304,9 @@ label {
 input,
 select {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
 
     padding: 0.7rem 0.85rem;
 
@@ -432,7 +436,7 @@ select {
 
 .point-inputs {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
     gap: 0.85rem;
 }
 
@@ -742,6 +746,7 @@ select {
 
 .chip-group-title {
     margin: 0 0 0.4rem;
+    padding: 0.35rem 0;
 
     color: var(--cocoa-muted);
 
@@ -749,7 +754,13 @@ select {
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    cursor: pointer;
+    list-style: none;
 }
+
+.chip-group-title::-webkit-details-marker { display: none; }
+.chip-group-title::after { content: "+"; float: right; color: var(--cocoa-muted); }
+.chip-group[open] > .chip-group-title::after { content: "−"; }
 
 
 .chips {
@@ -823,6 +834,40 @@ select {
     padding: 0.35rem 0.6rem;
     font-size: 0.82rem;
 }
+
+
+.topbar-primary {
+    border-color: var(--sakura);
+    background: var(--sakura);
+    color: var(--on-accent);
+}
+
+
+.plot-toolbar {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--blush);
+    border-radius: var(--radius);
+    background: var(--panel);
+    box-shadow: 0 3px 12px rgba(62, 42, 46, 0.05);
+}
+
+
+.bounds-grid { display: grid; gap: 0.45rem; }
+.bound-row {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.45rem;
+}
+.bound-row strong { color: var(--cocoa); font-size: 0.85rem; }
+.bound-row input, .component-grid input, .component-grid select {
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+}
+.component-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+.field-block > select { margin-bottom: 0.5rem; }
 
 
 .result-caveats {

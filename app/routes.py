@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
+import sympy as sp
 
 from app.mathcore import (
     OPERATIONS,
@@ -104,6 +105,14 @@ def operation_endpoint(operation):
         return error_response(f"Operación desconocida: {operation}", 404)
 
     def action(data):
-        return run(operation, get_expr_from_request(data), data)
+        can_omit_expression = operation in {"divergence", "curl", "conservative", "green", "vector_curve"}
+        can_omit_line_integral_expression = operation == "line_integral" and data.get("kind", "second") == "second"
+        if operation == "line_integral" and data.get("kind", "second") == "first" and not (data.get("latex") or data.get("expression")):
+            raise ValueError("La integral de primer tipo requiere una función escalar.")
+        if (can_omit_expression or can_omit_line_integral_expression) and not (data.get("latex") or data.get("expression")):
+            expr = sp.S.Zero
+        else:
+            expr = get_expr_from_request(data)
+        return run(operation, expr, data)
 
     return handle_api(action, f"/api/{operation}", "No se pudo calcular el resultado.")
